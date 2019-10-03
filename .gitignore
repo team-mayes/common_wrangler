@@ -110,3 +110,7 @@ ENV/
 /tests/test_data/fill_tpl/evb_viib-0.5_viilb5.0.par
 /tests/test_data/fill_tpl/evb_viib-1.0_viilb1.0.par
 /tests/test_data/fill_tpl/evb_viib-1.0_viilb5.0.par
+/tests/test_data/rename_files/hasspace.txt
+/tests/test_data/rename_files/hastwospaces.txt
+/tests/test_data/rename_files/now!exclaim.txt
+/tests/test_data/rename_files/now_exclaim.txt
