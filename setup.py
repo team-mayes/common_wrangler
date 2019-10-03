@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 """
 common_wrangler
-Scripts for file and data manipulation, as well as common scripts used in this project as well as gaussian_wrangler and md_wrangler
+Scripts for file and data manipulation, as well as common scripts used in this project as well as
+    gaussian_wrangler and md_wrangler
 """
 from setuptools import setup
-import versioneer
+# import versioneer
 
 DOCLINES = __doc__.split("\n")
 
@@ -14,8 +15,8 @@ setup(
     author='hmayes',
     description=DOCLINES[0],
     long_description="\n".join(DOCLINES[2:]),
-    version=versioneer.get_version(),
-    cmdclass=versioneer.get_cmdclass(),
+    # version=versioneer.get_version(),
+    # cmdclass=versioneer.get_cmdclass(),
     license='MIT',
 
     # Which Python importable modules should be included when your package is installed
@@ -27,11 +28,13 @@ setup(
     package_data={'common_wrangler': ["data/*.dat"]
                   },
 
-    entry_points={'console_scripts': ['common = common_wrangler.common:main',
+    entry_points={'console_scripts': ['rename_files = common_wrangler.rename_files:main',
+                                      'common = common_wrangler.common:main',
+                                      'fill_tpl = common_wrangler.fill_tpl:main'
                                       ],
                   },     package_dir={'common_wrangler': 'common_wrangler'},
 
-    test_suite='tests',
+    test_suite='tests', install_requires=['numpy', 'six', 'matplotlib']
     # Additional entries you may want simply uncomment the lines you want and fill in the data
     # author_email='me@place.org',      # Author email
     # url='http://www.my_package.com',  # Website

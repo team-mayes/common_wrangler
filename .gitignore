@@ -100,3 +100,13 @@ ENV/
 
 # mypy
 .mypy_cache/
+/common_wrangler.iml
+/.idea/
+/update.sh
+/tests/test_data/fill_tpl/evb_test.par
+/tests/test_data/fill_tpl/evb_viib0.0_viilb1.0.par
+/tests/test_data/fill_tpl/evb_viib0.0_viilb5.0.par
+/tests/test_data/fill_tpl/evb_viib-0.5_viilb1.0.par
+/tests/test_data/fill_tpl/evb_viib-0.5_viilb5.0.par
+/tests/test_data/fill_tpl/evb_viib-1.0_viilb1.0.par
+/tests/test_data/fill_tpl/evb_viib-1.0_viilb5.0.par
