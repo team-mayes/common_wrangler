@@ -224,6 +224,10 @@ def calc_k(temp, delta_gibbs):
     return BOLTZ_CONST * temp / PLANCK_CONST * math.exp(-delta_gibbs / (RG * temp))
 
 
+def calc_dist(a, b):
+    return np.linalg.norm(np.subtract(a, b))
+
+
 def pbc_dist(a, b, box):
     # TODO: make a test that ensures the distance calculated is <= sqrt(sqrt((a/2)^2+(b/2)^2) + (c/2)^2)) ?
     return np.linalg.norm(pbc_calc_vector(a, b, box))
