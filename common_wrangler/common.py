@@ -89,9 +89,17 @@ GAU_COORD_PAT = re.compile(r"Center     Atomic      Atomic             Coordinat
 GAU_SEP_PAT = re.compile(r"---------------------------------------------------------------------.*")
 GAU_E_PAT = re.compile(r"SCF Done:.*")
 GAU_CHARGE_PAT = re.compile(r"Charge =.*")
+GAU_STOICH_PAT = re.compile(r"Stoichiometry.*")
+GAU_CONVERG_PAT = re.compile(r"Item {15}Value {5}Threshold {2}Converged?")
+GAU_DIH_PAT = re.compile(r"! D.*")
+GAU_H_PAT = re.compile(r"Sum of electronic and thermal Enthalpies.*")
+STOICH = 'Stoichiometry'
 CHARGE = 'Charge'
 MULT = 'Mult'
 MULTIPLICITY = 'Multiplicity'
+ENERGY = 'Energy'
+CONVERG = 'Convergence'
+ENTHALPY = 'Enthalpy'
 
 # From template files
 BASE_NAME = 'base_name'
@@ -141,19 +149,19 @@ PY2 = sys.version_info[0] == 2
 
 # Exceptions #
 
-class MdError(Exception):
+class CommonError(Exception):
     pass
 
 
-class InvalidInputError(MdError):
+class InvalidInputError(CommonError):
     pass
 
 
-class InvalidDataError(MdError):
+class InvalidDataError(CommonError):
     pass
 
 
-class NotFoundError(MdError):
+class NotFoundError(CommonError):
     pass
 
 
@@ -1421,7 +1429,7 @@ def process_gausscom_file(gausscom_file):
     return gausscom_content
 
 
-def process_gausslog_file(gausslog_file):
+def process_gausslog_file(gausslog_file, find_dih=False, find_converg=False):
     # Grabs and stores in gausslog_content as a dictionary with the keys:
     #    (fyi: unlike process_gausscom_file, no SEC_HEAD is collected)
     #    CHARGE: overall charge (only) as int
@@ -1430,38 +1438,86 @@ def process_gausslog_file(gausslog_file):
     #        ATOM_TYPE: atom_type (str), ATOM_COORDS: (np array)
     #    SEC_TAIL: everything including and after the blank line following SEC_ATOMS
     with open(gausslog_file) as d:
-        gausslog_content = {SEC_ATOMS: {}, BASE_NAME: get_fname_root(gausslog_file)}
+        gausslog_content = {SEC_ATOMS: {}, BASE_NAME: get_fname_root(gausslog_file),
+                            STOICH: None, ENERGY: None, ENTHALPY: None}
         section = SEC_HEAD
         atom_id = 1
 
-        for line in d:
-            line = line.strip()
+        # add stop iteration catch because error can be thrown if EOF reached in one of the while loops
+        try:
+            for line in d:
+                line = line.strip()
 
-            if section == SEC_HEAD:
-                # only get overall charge and mult
-                if GAU_CHARGE_PAT.match(line):
-                    split_line = line.split('=')
-                    gausslog_content[CHARGE] = int(split_line[1].split()[0])
-                    gausslog_content[MULT] = int(split_line[2].split()[0])
-                    section = SEC_TAIL
+                if section == SEC_HEAD:
+                    # first find charge & multiplicity
+                    if GAU_CHARGE_PAT.match(line):
+                        split_line = line.split('=')
+                        gausslog_content[CHARGE] = int(split_line[1].split()[0])
+                        gausslog_content[MULT] = int(split_line[2].split()[0])
+                        section = SEC_TAIL
 
-            elif section == SEC_TAIL:
-                if GAU_COORD_PAT.match(line):
+                elif section == SEC_TAIL:
+                    # there is not always a dih section in every step
+                    while not (GAU_DIH_PAT.match(line) or GAU_COORD_PAT.match(line)):
+                        line = next(d).strip()
+                    # sometimes this will execute
+                    if find_dih and GAU_DIH_PAT.match(line):
+                        dih_dict = {}
+                        while GAU_DIH_PAT.match(line):
+                            line_split = line.split()
+                            dih_dict[line_split[2]] = float(line_split[3])
+                            line = next(d).strip()
+                        gausslog_content[DIHES] = dih_dict
+                    # may gave stopped by matching dih pat, so may need to continue
+                    while not GAU_COORD_PAT.match(line):
+                        line = next(d).strip()
                     next(d)
                     next(d)
                     section = SEC_ATOMS
 
-            elif section == SEC_ATOMS:
-                # will keep overwriting coordinates until it gets to the end
-                while not GAU_SEP_PAT.match(line):
-                    split_line = line.split()
-                    atom_type = ATOM_NUM_DICT[int(split_line[1])]
-                    atom_xyz = np.array(list(map(float, split_line[3:6])))
-                    gausslog_content[SEC_ATOMS][atom_id] = {ATOM_TYPE: atom_type, ATOM_COORDS: atom_xyz}
-                    atom_id += 1
-                    line = next(d).strip()
-                section = SEC_TAIL
-                atom_id = 1
+                elif section == SEC_ATOMS:
+                    # will keep overwriting coordinates until it gets to the end
+                    while not GAU_SEP_PAT.match(line):
+                        split_line = line.split()
+                        atom_type = ATOM_NUM_DICT[int(split_line[1])]
+                        atom_xyz = np.array(list(map(float, split_line[3:6])))
+                        # noinspection PyTypeChecker
+                        gausslog_content[SEC_ATOMS][atom_id] = {ATOM_TYPE: atom_type, ATOM_COORDS: atom_xyz}
+                        atom_id += 1
+                        line = next(d).strip()
+                    if not gausslog_content[STOICH]:
+                        while not GAU_STOICH_PAT.match(line):
+                            line = next(d).strip()
+                        gausslog_content[STOICH] = line.split()[1]
+                    while not GAU_E_PAT.match(line):
+                        line = next(d).strip()
+                    gausslog_content[ENERGY] = float(line.split('=')[1].split()[0])
+                    while not (GAU_CONVERG_PAT.match(line) or GAU_H_PAT.match(line)):
+                        line = next(d).strip()
+                    if GAU_H_PAT.match(line):
+                        gausslog_content[ENTHALPY] = float(line.split('=')[1].strip())
+                    if find_converg:
+                        converg = 0.0
+                        while not GAU_CONVERG_PAT.match(line):
+                            line = next(d).strip()
+                        for i in range(4):
+                            line = next(d).strip()
+                            line_split = line.split()
+                            try:
+                                # sometimes the convergence is so bad that it can't fit in the allotted space,
+                                # and then Gaussian prints '********' instead. Let's catch that, and call it some large
+                                # number
+                                converg += float(line_split[2]) / float(line_split[3])
+                            except ValueError as e:
+                                if e.args[1] == '********':
+                                    converg += 2000.00
+                                else:
+                                    raise InvalidDataError(e)
+                        gausslog_content[CONVERG] = converg
+                    section = SEC_TAIL
+                    atom_id = 1
+        except StopIteration:
+            pass
 
     return gausslog_content
 

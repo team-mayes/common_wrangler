@@ -114,3 +114,6 @@ ENV/
 /tests/test_data/rename_files/hastwospaces.txt
 /tests/test_data/rename_files/now!exclaim.txt
 /tests/test_data/rename_files/now_exclaim.txt
+/tests/test_data/rename_files/sub_dir/hasspace.txt
+/tests/test_data/rename_files/sub_dir/hastwospaces.txt
+/tests/test_data/rename_files/sub_dir/now!exclaim.txt

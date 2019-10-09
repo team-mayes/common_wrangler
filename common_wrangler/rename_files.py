@@ -49,6 +49,9 @@ def parse_cmdline(argv):
     parser.add_argument("-d", "--base_dir", help="The starting point for a file search "
                                                  "(defaults to current directory)",
                         default=os.getcwd())
+    parser.add_argument("-o", "--only_dir", help="Flag to specify that only the directory specified with '-d' "
+                                                 "(which defaults to current directory) is to be searched.",
+                        action='store_true')
     parser.add_argument('-p', "--pattern", help="The file pattern to search for "
                                                 "(defaults to '{}')".format(DEF_FILE_PAT),
                         default=DEF_FILE_PAT)
@@ -70,23 +73,35 @@ def parse_cmdline(argv):
     return args, GOOD_RET
 
 
-def rename_files_by_dir(tgt_dir, pattern, new_pattern):
+def rename_file(tgt_dir, fname, pattern, new_pattern):
+    old_name = os.path.abspath(os.path.join(tgt_dir, fname))
+    new_name = os.path.abspath(os.path.join(tgt_dir, fname.replace(pattern, new_pattern)))
+    os.rename(old_name, new_name)
+
+
+def rename_files_by_dir(tgt_dir, pattern, new_pattern, no_subdir):
     """
     Alternate filename matching
     @param tgt_dir: base file in which to search
     @param pattern: string to replaced
     @param new_pattern: string to replace the pattern string
+    @param no_subdir: boolean to indicate if only the current directory should be searched
     @return: an integer representing the number of files renamed
     """
     num_files_renamed = 0
     pat_match = re.compile(r".*" + re.escape(pattern) + r".*")
-    for root, dirs, files in os.walk(tgt_dir):
-        for fname in files:
+    if no_subdir:
+        file_list = os.listdir(tgt_dir)
+        for fname in file_list:
             if pat_match.match(fname):
-                old_name = os.path.abspath(os.path.join(root, fname))
-                new_name = os.path.abspath(os.path.join(root, fname.replace(pattern, new_pattern)))
-                os.rename(old_name, new_name)
+                rename_file(tgt_dir, fname, pattern, new_pattern)
                 num_files_renamed += 1
+    else:
+        for root, dirs, files in os.walk(tgt_dir):
+            for fname in files:
+                if pat_match.match(fname):
+                    rename_file(root, fname, pattern, new_pattern)
+                    num_files_renamed += 1
     return num_files_renamed
 
 
@@ -100,7 +115,7 @@ def main(argv=None):
     if ret != GOOD_RET or args is None:
         return ret
 
-    num_renamed_files = rename_files_by_dir(args.base_dir, args.pattern, args.new_pattern)
+    num_renamed_files = rename_files_by_dir(args.base_dir, args.pattern, args.new_pattern, args.only_dir)
     print("Found and renamed {} files".format(num_renamed_files))
     return GOOD_RET  # success
 

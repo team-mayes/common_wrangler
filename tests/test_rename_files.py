@@ -22,6 +22,7 @@ __author__ = 'hmayes'
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'test_data')
 SUB_DATA_DIR = os.path.join(DATA_DIR, 'rename_files')
+SUB_SUB_DATA_DIR = os.path.join(SUB_DATA_DIR, 'sub_dir')
 
 # Files #
 
@@ -36,17 +37,18 @@ REPLACED_FILE_NAMES2 = ['has space.txt', 'has two spaces.txt', 'now_exclaim.txt'
 # REPLACED_FILE_NAMES3 = ['has_space.txt', 'has_two_spaces.txt', 'now!exclaim.txt']
 
 
-def make_files(fname_list):
+def make_files(fname_list, file_dir):
     """
     Create files fresh, because will be moved when program runs
     @param fname_list: list of file names without directory name
+    @param file_dir: name of the directory where the files should be created
     """
     for fname in fname_list:
-        new_file = os.path.join(SUB_DATA_DIR, fname)
+        new_file = os.path.join(file_dir, fname)
         shutil.copyfile(SMALL_FILE, new_file)
 
 
-def add_sub_dir(fname_list, abs_dir):
+def get_abs_path_name(fname_list, abs_dir):
     """
     Create files fresh, because will be moved when program runs
     @param fname_list: list of file names without directory name
@@ -89,8 +91,6 @@ class TestRenameNoOutput(unittest.TestCase):
         with capture_stderr(main, test_input) as output:
             self.assertTrue("unrecognized arguments" in output)
 
-
-class TestRename(unittest.TestCase):
     def testNoFilesRenamed(self):
         test_input = []
         if logger.isEnabledFor(logging.DEBUG):
@@ -98,35 +98,73 @@ class TestRename(unittest.TestCase):
         with capture_stdout(main, test_input) as output:
             self.assertTrue("Found and renamed 0 files" in output)
 
+
+class TestRename(unittest.TestCase):
     def testDefaultPatterns(self):
-        make_files(TEST_FILE_NAMES)
+        # test with a sub dir
+        initial_fnames = get_abs_path_name(TEST_FILE_NAMES, SUB_DATA_DIR) + get_abs_path_name(TEST_FILE_NAMES,
+                                                                                              SUB_SUB_DATA_DIR)
+        expected_fnames = get_abs_path_name(REPLACED_FILE_NAMES1,
+                                            SUB_DATA_DIR) + get_abs_path_name(REPLACED_FILE_NAMES1, SUB_SUB_DATA_DIR)
+        for fname in expected_fnames + initial_fnames:
+            silent_remove(fname, disable=DISABLE_REMOVE)
+        make_files(TEST_FILE_NAMES, SUB_DATA_DIR)
+        make_files(TEST_FILE_NAMES, SUB_SUB_DATA_DIR)
         test_input = ["-d", SUB_DATA_DIR]
-        initial_fnames = add_sub_dir(TEST_FILE_NAMES, SUB_DATA_DIR)
-        expected_fnames = add_sub_dir(REPLACED_FILE_NAMES1, SUB_DATA_DIR)
         try:
             if logger.isEnabledFor(logging.DEBUG):
                 main(test_input)
-                # need to make again for capturing std out
-                make_files(TEST_FILE_NAMES)
+                # need to make again after test run for capturing std out
+                make_files(TEST_FILE_NAMES, SUB_DATA_DIR)
+                make_files(TEST_FILE_NAMES, SUB_SUB_DATA_DIR)
+            # main(test_input)
+            with capture_stdout(main, test_input) as output:
+                self.assertTrue("Found and renamed 4 files" in output)
+            self.assertTrue(count_files(initial_fnames) == 2)
+            self.assertTrue(count_files(expected_fnames) == 6)
+        finally:
+            for fname in expected_fnames:
+                silent_remove(fname, disable=DISABLE_REMOVE)
+            pass
+
+    def testDefaultPatternsOnlyOneDeep(self):
+        # test with a sub dir
+        initial_fnames = get_abs_path_name(TEST_FILE_NAMES, SUB_DATA_DIR) + get_abs_path_name(TEST_FILE_NAMES,
+                                                                                              SUB_SUB_DATA_DIR)
+        expected_fnames = get_abs_path_name(REPLACED_FILE_NAMES1,
+                                            SUB_DATA_DIR) + get_abs_path_name(TEST_FILE_NAMES, SUB_SUB_DATA_DIR)
+        for fname in expected_fnames + initial_fnames:
+            silent_remove(fname, disable=DISABLE_REMOVE)
+        make_files(TEST_FILE_NAMES, SUB_DATA_DIR)
+        make_files(TEST_FILE_NAMES, SUB_SUB_DATA_DIR)
+        test_input = ["-d", SUB_DATA_DIR, "-o"]
+        try:
+            if logger.isEnabledFor(logging.DEBUG):
+                main(test_input)
+                # need to make again after test run for capturing std out
+                make_files(TEST_FILE_NAMES, SUB_DATA_DIR)
+                make_files(TEST_FILE_NAMES, SUB_SUB_DATA_DIR)
             with capture_stdout(main, test_input) as output:
                 self.assertTrue("Found and renamed 2 files" in output)
-            self.assertTrue(count_files(initial_fnames), 2)
-            self.assertTrue(count_files(expected_fnames), 3)
+            self.assertTrue(count_files(initial_fnames) == 4)
+            self.assertTrue(count_files(expected_fnames) == 6)
         finally:
             for fname in expected_fnames:
                 silent_remove(fname, disable=DISABLE_REMOVE)
             pass
 
     def testAltPattern(self):
-        make_files(TEST_FILE_NAMES)
+        initial_fnames = get_abs_path_name(TEST_FILE_NAMES, SUB_DATA_DIR)
+        expected_fnames = get_abs_path_name(REPLACED_FILE_NAMES2, SUB_DATA_DIR)
+        for fname in expected_fnames + initial_fnames:
+            silent_remove(fname, disable=DISABLE_REMOVE)
+        make_files(TEST_FILE_NAMES, SUB_DATA_DIR)
         test_input = ["-d", SUB_DATA_DIR, "-p", "!", "-n", "_"]
-        initial_fnames = add_sub_dir(TEST_FILE_NAMES, SUB_DATA_DIR)
-        expected_fnames = add_sub_dir(REPLACED_FILE_NAMES2, SUB_DATA_DIR)
         try:
             if logger.isEnabledFor(logging.DEBUG):
                 main(test_input)
                 # need to make again for capturing std out
-                make_files(TEST_FILE_NAMES)
+                make_files(TEST_FILE_NAMES, SUB_DATA_DIR)
             with capture_stdout(main, test_input) as output:
                 self.assertTrue("Found and renamed 1 files" in output)
             self.assertTrue(count_files(initial_fnames), 1)
