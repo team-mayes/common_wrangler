@@ -99,6 +99,7 @@ MULT = 'Mult'
 MULTIPLICITY = 'Multiplicity'
 ENERGY = 'Energy'
 CONVERG = 'Convergence'
+CONVERG_ERR = 'Convergence_Error'
 ENTHALPY = 'Enthalpy'
 
 # From template files
@@ -1497,6 +1498,7 @@ def process_gausslog_file(gausslog_file, find_dih=False, find_converg=False):
                     if GAU_H_PAT.match(line):
                         gausslog_content[ENTHALPY] = float(line.split('=')[1].strip())
                     if find_converg:
+                        converge_error = False
                         converg = 0.0
                         while not GAU_CONVERG_PAT.match(line):
                             line = next(d).strip()
@@ -1504,16 +1506,20 @@ def process_gausslog_file(gausslog_file, find_dih=False, find_converg=False):
                             line = next(d).strip()
                             line_split = line.split()
                             try:
-                                # sometimes the convergence is so bad that it can't fit in the allotted space,
-                                # and then Gaussian prints '********' instead. Let's catch that, and call it some large
-                                # number
+                                # sometimes the convergence is so bad that then Gaussian prints '********' instead of
+                                # a number (which won't fit). Let's catch that, and assign a large convergence penalty
+                                current_converge = float(line_split[2]) / float(line_split[3])
+                                if current_converge > 1.0:
+                                    converge_error = True
                                 converg += float(line_split[2]) / float(line_split[3])
                             except ValueError as e:
-                                if e.args[1] == '********':
+                                if '********' in e.args[0]:
                                     converg += 2000.00
+                                    converge_error = True
                                 else:
                                     raise InvalidDataError(e)
                         gausslog_content[CONVERG] = converg
+                        gausslog_content[CONVERG_ERR] = converge_error
                     section = SEC_TAIL
                     atom_id = 1
         except StopIteration:
