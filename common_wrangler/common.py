@@ -1490,6 +1490,7 @@ def process_gausslog_file(gausslog_file, find_dih=False, find_converg=False):
                         while not GAU_STOICH_PAT.match(line):
                             line = next(d).strip()
                         gausslog_content[STOICH] = line.split()[1]
+                    # Sometimes there is energy before hitting enthalpy, but not in CalcAll jobs
                     while not (GAU_E_PAT.match(line) or GAU_H_PAT.match(line)):
                         line = next(d).strip()
                     if GAU_E_PAT.match(line):
