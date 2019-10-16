@@ -1449,7 +1449,6 @@ def process_gausslog_file(gausslog_file, find_dih=False, find_converg=False, fin
                             ENERGY: None, ENTHALPY: None, CONVERG_STEP_DICT: collections.OrderedDict()}
         section = SEC_HEAD
         atom_id = 1
-        # step_num = 0  # to keep IDE from complaining
 
         # add stop iteration catch because error can be thrown if EOF reached in one of the while loops
         try:
@@ -1497,20 +1496,32 @@ def process_gausslog_file(gausslog_file, find_dih=False, find_converg=False, fin
                         while not GAU_STOICH_PAT.match(line):
                             line = next(d).strip()
                         gausslog_content[STOICH] = line.split()[1]
-                    if find_step_converg:
-                        while not GAU_STEP_PAT:
-                            line = next(d).strip()
-                        split_line = line.split()
-                        step_num = int(split_line[2])
-                    # Sometimes there is energy before hitting enthalpy, but not in CalcAll jobs
-                    while not (GAU_E_PAT.match(line) or GAU_H_PAT.match(line)):
+                        line = next(d).strip()
+
+                    # Sometimes there is energy & step number before hitting enthalpy, but not in CalcAll jobs
+                    while not (GAU_E_PAT.match(line) or GAU_H_PAT.match(line) or GAU_CONVERG_PAT.match(line)):
                         line = next(d).strip()
                     if GAU_E_PAT.match(line):
                         gausslog_content[ENERGY] = float(line.split('=')[1].split()[0])
-                    while not (GAU_CONVERG_PAT.match(line) or GAU_H_PAT.match(line)):
+                        line = next(d).strip()
+
+                    # if thermo right after coordinates, could be CalcAll job, and then done
+                    # or in Freq job, thermo before step number. Thermo can also come after SCF in Freq job
+                    while not (GAU_E_PAT.match(line) or GAU_H_PAT.match(line) or GAU_STEP_PAT.match(line)):
                         line = next(d).strip()
                     if GAU_H_PAT.match(line):
                         gausslog_content[ENTHALPY] = float(line.split('=')[1].strip())
+                        line = next(d).strip()
+
+                    # Step num after SCF Done
+                    if find_step_converg:
+                        while not GAU_STEP_PAT.match(line):
+                            line = next(d).strip()
+                        split_line = line.split()
+                        step_num = int(split_line[2])
+                        line = next(d).strip()
+
+                    # convergence after step number
                     if find_converg or find_step_converg:
                         converge_error = False
                         converg = 0.0
@@ -1537,6 +1548,7 @@ def process_gausslog_file(gausslog_file, find_dih=False, find_converg=False, fin
                                     raise InvalidDataError(e)
                         if find_step_converg:
                             if step_num in gausslog_content[CONVERG_STEP_DICT].keys():
+                                # noinspection PyUnresolvedReferences
                                 step_num = gausslog_content[CONVERG_STEP_DICT].keys()[-1] + 1
                             # noinspection PyTypeChecker
                             gausslog_content[CONVERG_STEP_DICT][step_num] = {MAX_FORCE: ind_converg[0],
@@ -1548,6 +1560,7 @@ def process_gausslog_file(gausslog_file, find_dih=False, find_converg=False, fin
                         else:
                             gausslog_content[CONVERG] = converg
                             gausslog_content[CONVERG_ERR] = converge_error
+
                     section = SEC_TAIL
                     atom_id = 1
         except StopIteration:
