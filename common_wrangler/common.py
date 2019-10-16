@@ -93,11 +93,17 @@ GAU_STOICH_PAT = re.compile(r"Stoichiometry.*")
 GAU_CONVERG_PAT = re.compile(r"Item {15}Value {5}Threshold {2}Converged?")
 GAU_DIH_PAT = re.compile(r"! D.*")
 GAU_H_PAT = re.compile(r"Sum of electronic and thermal Enthalpies.*")
+GAU_STEP_PAT = re.compile(r"Step number.*")
 STOICH = 'Stoichiometry'
 CHARGE = 'Charge'
 MULT = 'Mult'
 MULTIPLICITY = 'Multiplicity'
 ENERGY = 'Energy'
+CONVERG_STEP_DICT = 'converg_dict'
+MAX_FORCE = 'Max Force'
+RMS_FORCE = 'RMS Force'
+MAX_DISPL = 'Max Displacement'
+RMS_DISPL = 'RMS Displacement'
 CONVERG = 'Convergence'
 CONVERG_ERR = 'Convergence_Error'
 ENTHALPY = 'Enthalpy'
@@ -790,7 +796,7 @@ def create_dict(all_conv, col_name, csv_reader, data_conv, result, src_file):
 def write_csv(data, out_fname, fieldnames, extrasaction="raise", mode='w', quote_style=csv.QUOTE_NONNUMERIC,
               print_message=True, round_digits=False):
     """
-    Writes the given data to the given file location.
+    Given a list of dicts and fieldnames, writes a csv
 
     @param round_digits: if desired, provide decimal number for rounding
     @param data: The data to write (list of dicts).
@@ -1430,7 +1436,7 @@ def process_gausscom_file(gausscom_file):
     return gausscom_content
 
 
-def process_gausslog_file(gausslog_file, find_dih=False, find_converg=False):
+def process_gausslog_file(gausslog_file, find_dih=False, find_converg=False, find_step_converg=False):
     # Grabs and stores in gausslog_content as a dictionary with the keys:
     #    (fyi: unlike process_gausscom_file, no SEC_HEAD is collected)
     #    CHARGE: overall charge (only) as int
@@ -1439,10 +1445,11 @@ def process_gausslog_file(gausslog_file, find_dih=False, find_converg=False):
     #        ATOM_TYPE: atom_type (str), ATOM_COORDS: (np array)
     #    SEC_TAIL: everything including and after the blank line following SEC_ATOMS
     with open(gausslog_file) as d:
-        gausslog_content = {SEC_ATOMS: {}, BASE_NAME: get_fname_root(gausslog_file),
-                            STOICH: None, ENERGY: None, ENTHALPY: None}
+        gausslog_content = {SEC_ATOMS: {}, BASE_NAME: get_fname_root(gausslog_file), STOICH: None,
+                            ENERGY: None, ENTHALPY: None, CONVERG_STEP_DICT: collections.OrderedDict()}
         section = SEC_HEAD
         atom_id = 1
+        # step_num = 0  # to keep IDE from complaining
 
         # add stop iteration catch because error can be thrown if EOF reached in one of the while loops
         try:
@@ -1490,6 +1497,11 @@ def process_gausslog_file(gausslog_file, find_dih=False, find_converg=False):
                         while not GAU_STOICH_PAT.match(line):
                             line = next(d).strip()
                         gausslog_content[STOICH] = line.split()[1]
+                    if find_step_converg:
+                        while not GAU_STEP_PAT:
+                            line = next(d).strip()
+                        split_line = line.split()
+                        step_num = int(split_line[2])
                     # Sometimes there is energy before hitting enthalpy, but not in CalcAll jobs
                     while not (GAU_E_PAT.match(line) or GAU_H_PAT.match(line)):
                         line = next(d).strip()
@@ -1499,9 +1511,10 @@ def process_gausslog_file(gausslog_file, find_dih=False, find_converg=False):
                         line = next(d).strip()
                     if GAU_H_PAT.match(line):
                         gausslog_content[ENTHALPY] = float(line.split('=')[1].strip())
-                    if find_converg:
+                    if find_converg or find_step_converg:
                         converge_error = False
                         converg = 0.0
+                        ind_converg = []
                         while not GAU_CONVERG_PAT.match(line):
                             line = next(d).strip()
                         for i in range(4):
@@ -1510,18 +1523,31 @@ def process_gausslog_file(gausslog_file, find_dih=False, find_converg=False):
                             try:
                                 # sometimes the convergence is so bad that then Gaussian prints '********' instead of
                                 # a number (which won't fit). Let's catch that, and assign a large convergence penalty
-                                current_converge = float(line_split[2]) / float(line_split[3])
+                                ind_converg.append(float(line_split[2]))
+                                current_converge = ind_converg[i] / float(line_split[3])
                                 if current_converge > 1.0:
                                     converge_error = True
-                                converg += float(line_split[2]) / float(line_split[3])
+                                converg += current_converge
                             except ValueError as e:
                                 if '********' in e.args[0]:
+                                    ind_converg.append(9.999999)
                                     converg += 2000.00
                                     converge_error = True
                                 else:
                                     raise InvalidDataError(e)
-                        gausslog_content[CONVERG] = converg
-                        gausslog_content[CONVERG_ERR] = converge_error
+                        if find_step_converg:
+                            if step_num in gausslog_content[CONVERG_STEP_DICT].keys():
+                                step_num = gausslog_content[CONVERG_STEP_DICT].keys()[-1] + 1
+                            # noinspection PyTypeChecker
+                            gausslog_content[CONVERG_STEP_DICT][step_num] = {MAX_FORCE: ind_converg[0],
+                                                                             RMS_FORCE: ind_converg[1],
+                                                                             MAX_DISPL: ind_converg[2],
+                                                                             RMS_DISPL: ind_converg[3],
+                                                                             CONVERG: converg,
+                                                                             CONVERG_ERR: converge_error}
+                        else:
+                            gausslog_content[CONVERG] = converg
+                            gausslog_content[CONVERG_ERR] = converge_error
                     section = SEC_TAIL
                     atom_id = 1
         except StopIteration:
