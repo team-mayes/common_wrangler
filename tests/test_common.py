@@ -9,18 +9,21 @@ import os
 import shutil
 import tempfile
 import unittest
+
+from common_wrangler import capture_stdout
+
 from common_wrangler.common import (find_files_by_dir, read_csv, get_fname_root, write_csv, str_to_bool,
                                     read_csv_header, fmt_row_data, calc_k, diff_lines, create_out_fname, dequote,
                                     quote, conv_raw_val, pbc_calc_vector, pbc_vector_avg, read_csv_dict,
                                     InvalidDataError, unit_vector, vec_angle, vec_dihedral, check_file_and_file_list,
-                                    make_dir, NotFoundError, silent_remove)
+                                    make_dir, NotFoundError, silent_remove, list_to_file)
 import logging
 
 __author__ = 'mayes'
 
-logging.basicConfig(level=logging.DEBUG)
+# logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
-
+DISABLE_REMOVE = logger.isEnabledFor(logging.DEBUG)
 
 # Constants #
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'test_data')
@@ -63,6 +66,9 @@ DIFF_LINES_ONE_NAN_PREC_DIFF = os.path.join(SUB_DATA_DIR, 'diff_lines_one_nan.cs
 
 DIFF_LINES_SCI_FILE = os.path.join(SUB_DATA_DIR, 'cv_analysis_quat.log')
 DIFF_LINES_ALT_SCI_FILE = os.path.join(SUB_DATA_DIR, 'cv_analysis_quat_good.log')
+
+LIST_OUT = os.path.join(SUB_DATA_DIR, "temp.txt")
+GOOD_LIST_OUT = os.path.join(SUB_DATA_DIR, "good_list.txt")
 
 DEF_FILE_PAT = 'fes*.out'
 
@@ -232,7 +238,7 @@ class TestMakeDir(unittest.TestCase):
             make_dir(NEW_DIR)
             self.assertTrue(os.path.isdir(NEW_DIR))
         finally:
-            silent_remove(NEW_DIR)
+            silent_remove(NEW_DIR, disable=DISABLE_REMOVE)
 
 
 class TestReadFirstRow(unittest.TestCase):
@@ -343,6 +349,27 @@ class TestWriteCsv(unittest.TestCase):
                 self.assertDictEqual(data[i], csv_row)
         finally:
             shutil.rmtree(tmp_dir)
+
+
+class TestListToFile(unittest.TestCase):
+    def testWriteAppendList(self):
+        list_of_strings = ['hello', 'friends']
+        list_of_lists = [VEC_23, VEC_34]
+
+        try:
+            # list_to_file(list_of_strings, LIST_OUT)
+            with capture_stdout(list_to_file, list_of_strings, LIST_OUT) as output:
+                self.assertTrue("Wrote file: tests/test_data/common/temp.txt" in output)
+            # list_to_file(VEC_21, LIST_OUT, mode="a")
+            with capture_stdout(list_to_file, VEC_21, LIST_OUT, mode="a") as output:
+                self.assertTrue("  Appended: tests/test_data/common/temp.txt" in output)
+            # list_to_file(list_of_strings, LIST_OUT)
+            with capture_stdout(list_to_file, list_of_lists, LIST_OUT, mode="a", print_message=False) as output:
+                self.assertTrue(len(output) == 0)
+            self.assertFalse(diff_lines(LIST_OUT, GOOD_LIST_OUT))
+        finally:
+            silent_remove(LIST_OUT, disable=DISABLE_REMOVE)
+            pass
 
 
 class TestFormatData(unittest.TestCase):
