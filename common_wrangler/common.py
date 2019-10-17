@@ -1547,9 +1547,12 @@ def process_gausslog_file(gausslog_file, find_dih=False, find_converg=False, fin
                                 else:
                                     raise InvalidDataError(e)
                         if find_step_converg:
-                            if step_num in gausslog_content[CONVERG_STEP_DICT].keys():
-                                # noinspection PyUnresolvedReferences
-                                step_num = gausslog_content[CONVERG_STEP_DICT].keys()[-1] + 1
+                            # the transformations with step_num_list may not be strictly necessary, but makes IDE happy
+                            #    and (likely due to casting the list) removed an error that appeared on a unix cluser
+                            #    but not on a local mac
+                            step_num_list = list(gausslog_content[CONVERG_STEP_DICT].keys())
+                            if step_num in step_num_list:
+                                step_num = int(step_num_list[-1]) + 1
                             # noinspection PyTypeChecker
                             gausslog_content[CONVERG_STEP_DICT][step_num] = {MAX_FORCE: ind_converg[0],
                                                                              RMS_FORCE: ind_converg[1],
