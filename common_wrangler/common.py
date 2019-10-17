@@ -625,6 +625,43 @@ def find_files_by_dir(tgt_dir, pat):
     return match_dirs
 
 
+def check_file_and_file_list(file_name, file_list_name):
+    """
+    Checks that the file and/or list of files contains valid file names.
+    :param file_name: None or str (file_name)
+    :param file_list_name: None or str (a file with a list of file names (one per line))
+    :return: a list of valid file names
+    """
+    valid_fnames = []
+    invalid_fnames = []
+    if file_list_name is not None:
+        with open(file_list_name) as f:
+            for line in f:
+                fname = line.strip()
+                # ignore blank lines
+                if len(fname) == 0:
+                    continue
+                if os.path.isfile(fname):
+                    valid_fnames.append(fname)
+                else:
+                    invalid_fnames.append(fname)
+    if file_name is not None:
+        if os.path.isfile(file_name):
+            valid_fnames.append(file_name)
+        else:
+            invalid_fnames.append(file_name)
+
+    if len(invalid_fnames) > 0:
+        warning_message = "The following file name(s) could not be found:"
+        for fname in invalid_fnames:
+            warning_message += "\n    {}".format(fname)
+        raise IOError(warning_message)
+    if len(valid_fnames) == 0:
+        raise InvalidDataError("No files to process.")
+
+    return valid_fnames
+
+
 def copytree(src, dst, symlinks=False, ignore=None):
     """This is a copy of the standard Python shutil.copytree, but it
     allows for an existing destination directory.

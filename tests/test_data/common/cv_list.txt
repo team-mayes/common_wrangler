@@ -1,1 +1,0 @@
-test_data/small_tests/cv_0.500_20c_short.txt

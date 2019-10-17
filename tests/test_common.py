@@ -12,7 +12,8 @@ import unittest
 from common_wrangler.common import (find_files_by_dir, read_csv, get_fname_root, write_csv, str_to_bool,
                                     read_csv_header, fmt_row_data, calc_k, diff_lines, create_out_fname, dequote,
                                     quote, conv_raw_val, pbc_calc_vector, pbc_vector_avg, read_csv_dict,
-                                    InvalidDataError, unit_vector, vec_angle, vec_dihedral)
+                                    InvalidDataError, unit_vector, vec_angle, vec_dihedral, check_file_and_file_list,
+                                    make_dir, NotFoundError, silent_remove)
 import logging
 
 __author__ = 'mayes'
@@ -25,6 +26,7 @@ logger = logging.getLogger(__name__)
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'test_data')
 SUB_DATA_DIR = os.path.join(DATA_DIR, 'common')
 FES_DIR = os.path.join(SUB_DATA_DIR, 'fes_out')
+NEW_DIR = os.path.join(SUB_DATA_DIR, 'new_dir')
 
 ELEM_DICT_FILE = os.path.join(SUB_DATA_DIR, 'element_dict.csv')
 ATOM_DICT_FILE = os.path.join(SUB_DATA_DIR, 'atom_reorder.csv')
@@ -39,6 +41,8 @@ ORIG_WHAM_FNAME = ORIG_WHAM_ROOT + ".txt"
 ORIG_WHAM_PATH = os.path.join(DATA_DIR, ORIG_WHAM_FNAME)
 SHORT_WHAM_PATH = os.path.join(DATA_DIR, ORIG_WHAM_FNAME)
 EMPTY_CSV = os.path.join(SUB_DATA_DIR, 'empty.csv')
+
+FILE_LIST = os.path.join(SUB_DATA_DIR, 'file_list.txt')
 
 OUT_PFX = 'rad_'
 
@@ -173,7 +177,6 @@ class TestFindFiles(unittest.TestCase):
     """
     Tests for the file finder.
     """
-
     def test_find(self):
         found = find_files_by_dir(FES_DIR, DEF_FILE_PAT)
         exp_data = expected_dir_data()
@@ -181,10 +184,55 @@ class TestFindFiles(unittest.TestCase):
         for key, files in exp_data.items():
             found_files = found.get(key)
             try:
-                # noinspection PyUnresolvedReferences
-                self.assertCountEqual(files, found_files)
+                self.assertEqual(len(files), len(found_files))
             except AttributeError:
                 self.assertEqual(files, found_files)
+
+
+class TestCheckFileFileList(unittest.TestCase):
+    """
+    Tests for the file finder.
+    """
+    def test_NoneOnly(self):
+        try:
+            found_list = check_file_and_file_list(None, None)
+            self.assertFalse(found_list)
+        except InvalidDataError as e:
+            self.assertTrue("No files to process" in e.args[0])
+
+    def test_NoSuchFile(self):
+        try:
+            found_list = check_file_and_file_list("ghost.com", None)
+            self.assertFalse(found_list)
+        except IOError as e:
+            self.assertTrue("ghost.com" in e.args[0])
+
+    def test_name_only(self):
+        found_list = check_file_and_file_list(ELEM_DICT_FILE, None)
+        self.assertTrue(len(found_list) == 1)
+        self.assertTrue(ELEM_DICT_FILE == found_list[0])
+
+    def test_list_only(self):
+        found_list = check_file_and_file_list(None, FILE_LIST)
+        self.assertTrue(len(found_list) == 4)
+
+
+class TestMakeDir(unittest.TestCase):
+    def testExistingDir(self):
+        try:
+            hello = make_dir(SUB_DATA_DIR)
+            self.assertTrue(hello is None)
+            print(hello)
+        except NotFoundError:
+            self.fail("make_dir() raised NotFoundError unexpectedly!")
+
+    def testNewDir(self):
+        try:
+            silent_remove(NEW_DIR)
+            make_dir(NEW_DIR)
+            self.assertTrue(os.path.isdir(NEW_DIR))
+        finally:
+            silent_remove(NEW_DIR)
 
 
 class TestReadFirstRow(unittest.TestCase):
