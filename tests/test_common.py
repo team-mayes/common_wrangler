@@ -10,7 +10,7 @@ import shutil
 import tempfile
 import unittest
 
-from common_wrangler import capture_stdout
+from common_wrangler import capture_stdout, print_csv_stdout
 
 from common_wrangler.common import (find_files_by_dir, read_csv, get_fname_root, write_csv, str_to_bool,
                                     read_csv_header, fmt_row_data, calc_k, diff_lines, create_out_fname, dequote,
@@ -46,6 +46,7 @@ SHORT_WHAM_PATH = os.path.join(DATA_DIR, ORIG_WHAM_FNAME)
 EMPTY_CSV = os.path.join(SUB_DATA_DIR, 'empty.csv')
 
 FILE_LIST = os.path.join(SUB_DATA_DIR, 'file_list.txt')
+FILE_LIST_W_MISSING_FILE = os.path.join(SUB_DATA_DIR, 'file_list_with_ghost.txt')
 
 OUT_PFX = 'rad_'
 
@@ -218,9 +219,17 @@ class TestCheckFileFileList(unittest.TestCase):
         self.assertTrue(len(found_list) == 1)
         self.assertTrue(ELEM_DICT_FILE == found_list[0])
 
-    def test_list_only(self):
+    def testList(self):
         found_list = check_file_and_file_list(None, FILE_LIST)
         self.assertTrue(len(found_list) == 4)
+
+    def testListWithMissingFile(self):
+        # found_list = check_file_and_file_list(None, FILE_LIST_W_MISSING_FILE)
+        try:
+            found_list = check_file_and_file_list(None, FILE_LIST_W_MISSING_FILE)
+            self.assertFalse(found_list)
+        except IOError as e:
+            self.assertTrue("ghost.csv" in e.args[0])
 
 
 class TestMakeDir(unittest.TestCase):
@@ -228,7 +237,6 @@ class TestMakeDir(unittest.TestCase):
         try:
             hello = make_dir(SUB_DATA_DIR)
             self.assertTrue(hello is None)
-            print(hello)
         except NotFoundError:
             self.fail("make_dir() raised NotFoundError unexpectedly!")
 
@@ -257,6 +265,16 @@ class TestFnameManipulation(unittest.TestCase):
         """
         self.assertTrue(create_out_fname(ORIG_WHAM_PATH, prefix=OUT_PFX).endswith(
             os.sep + OUT_PFX + ORIG_WHAM_FNAME))
+
+    def testOutFnameRemovePrefix(self):
+        """
+        Check for prefix addition after prefix removal.
+        """
+        prefix_to_remove = 'ghost'
+        beginning_name = os.path.join(DATA_DIR, prefix_to_remove + ORIG_WHAM_FNAME)
+        good_end_name = os.path.join(DATA_DIR, OUT_PFX + ORIG_WHAM_FNAME)
+        new_name = create_out_fname(beginning_name, prefix=OUT_PFX, remove_prefix=prefix_to_remove)
+        self.assertTrue(new_name == good_end_name)
 
     def testGetRootName(self):
         """
@@ -338,8 +356,9 @@ class TestWriteCsv(unittest.TestCase):
         try:
             tmp_dir = tempfile.mkdtemp()
             tgt_fname = create_out_fname(SHORT_WHAM_PATH, prefix=OUT_PFX, base_dir=tmp_dir)
-
-            write_csv(data, tgt_fname, RAD_KEY_SEQ)
+            # write_csv(data, tgt_fname, RAD_KEY_SEQ)
+            with capture_stdout(write_csv, data, tgt_fname, RAD_KEY_SEQ) as output:
+                self.assertTrue("Wrote file:" in output)
             csv_result = read_csv(tgt_fname,
                                   data_conv={FREE_KEY: str_to_bool,
                                              CORR_KEY: float,
@@ -349,6 +368,57 @@ class TestWriteCsv(unittest.TestCase):
                 self.assertDictEqual(data[i], csv_row)
         finally:
             shutil.rmtree(tmp_dir)
+
+    def testAppendCsv(self):
+        tmp_dir = None
+        data = csv_data()
+        try:
+            tmp_dir = tempfile.mkdtemp()
+            tgt_fname = create_out_fname(SHORT_WHAM_PATH, prefix=OUT_PFX, base_dir=tmp_dir)
+            # write_csv(data, tgt_fname, RAD_KEY_SEQ)
+            with capture_stdout(write_csv, data, tgt_fname, RAD_KEY_SEQ, mode="a") as output:
+                self.assertTrue("Appended:" in output)
+            csv_result = read_csv(tgt_fname,
+                                  data_conv={FREE_KEY: str_to_bool,
+                                             CORR_KEY: float,
+                                             COORD_KEY: str, })
+            dict_from_reading_append = [{str(data[0][FREE_KEY]): str(data[1][FREE_KEY]),
+                                        str(data[0][CORR_KEY]): str(data[1][CORR_KEY]),
+                                        data[0][COORD_KEY]: data[1][COORD_KEY], }]
+            self.assertEqual(len(dict_from_reading_append), len(csv_result))
+            for i, csv_row in enumerate(csv_result):
+                self.assertDictEqual(dict_from_reading_append[i], csv_row)
+        finally:
+            shutil.rmtree(tmp_dir)
+
+    def testRoundNum(self):
+        # like testWriteCsv, but have it round away extra digits
+        tmp_dir = None
+        data = csv_data()
+        for data_dict in data:
+            data_dict[CORR_KEY] += 0.0024
+        try:
+            tmp_dir = tempfile.mkdtemp()
+            tgt_fname = create_out_fname(SHORT_WHAM_PATH, prefix=OUT_PFX, base_dir=tmp_dir)
+            write_csv(data, tgt_fname, RAD_KEY_SEQ, round_digits=2)
+            csv_result = read_csv(tgt_fname,
+                                  data_conv={FREE_KEY: str_to_bool,
+                                             CORR_KEY: float,
+                                             COORD_KEY: str, })
+            self.assertEqual(len(data), len(csv_result))
+            for i, csv_row in enumerate(csv_result):
+                self.assertDictEqual(data[i], csv_row)
+        finally:
+            shutil.rmtree(tmp_dir)
+
+    def testWriteCsvToStdOut(self):
+        data = csv_data()
+        good_output_list = ['"coord","free_energy","corr"',
+                            '"75",True,123.42',
+                            '"yellow",False,999.43', '']
+        with capture_stdout(print_csv_stdout, data, RAD_KEY_SEQ) as output:
+            output_list = output.split('\r\n')
+            self.assertTrue(output_list == good_output_list)
 
 
 class TestListToFile(unittest.TestCase):

@@ -572,14 +572,13 @@ def create_out_fname(src_file, prefix='', suffix='', remove_prefix=None, base_di
     if base_dir is None:
         base_dir = os.path.dirname(src_file)
 
-    file_name = os.path.basename(src_file)
-    if remove_prefix is not None and file_name.startswith(remove_prefix):
-        base_name = file_name[len(remove_prefix):]
-    else:
-        base_name = os.path.splitext(file_name)[0]
+    base_name = get_fname_root(src_file)
+
+    if remove_prefix is not None and base_name.startswith(remove_prefix):
+        base_name = base_name[len(remove_prefix):]
 
     if ext is None:
-        ext = os.path.splitext(file_name)[1]
+        ext = os.path.splitext(src_file)[1]
 
     return os.path.abspath(os.path.join(base_dir, prefix + base_name + suffix + ext))
 
@@ -823,23 +822,52 @@ def write_csv(data, out_fname, fieldnames, extrasaction="raise", mode='w', quote
     """
     with open(out_fname, mode) as csv_file:
         writer = csv.DictWriter(csv_file, fieldnames, extrasaction=extrasaction, quoting=quote_style)
-        if mode == 'w':
-            writer.writeheader()
-        if round_digits:
-            for row_id in range(len(data)):
-                new_dict = {}
-                for key, val in data[row_id].items():
-                    if isinstance(val, float):
-                        new_dict[key] = round(val, round_digits)
-                    else:
-                        new_dict[key] = val
-                data[row_id] = new_dict
-        writer.writerows(data)
+        execute_csv_dict_writer(data, mode, round_digits, writer)
     if print_message:
         if mode == 'a':
             print("  Appended: {}".format(out_fname))
         elif mode == 'w':
             print("Wrote file: {}".format(out_fname))
+
+
+def print_csv_stdout(data, fieldnames, extrasaction="raise", mode="w",
+                     quote_style=csv.QUOTE_NONNUMERIC, round_digits=False):
+    """
+    Given a list of dicts and fieldnames, writes a csv to stdout
+
+    @param round_digits: if desired, provide decimal number for rounding
+    @param data: The data to write (list of dicts).
+    @param fieldnames: The sequence of field names to use for the header.
+    @param extrasaction: What to do when there are extra keys.  Acceptable
+        values are "raise" or "ignore".
+    @param mode: default mode is to overwrite file
+    @param quote_style: dictates csv output style
+    """
+    writer = csv.DictWriter(sys.stdout, fieldnames, extrasaction=extrasaction, quoting=quote_style)
+    execute_csv_dict_writer(data, mode, round_digits, writer)
+
+
+def execute_csv_dict_writer(data, mode, round_digits, writer):
+    """
+    Common method for csv.DictWriter to file or stdout
+
+    @param writer: a csv.DictWriter object
+    @param data: The data to write (list of dicts).
+    @param round_digits: if desired, provide decimal number for rounding
+    @param mode: if mode is "w", writes header
+    """
+    if mode == 'w':
+        writer.writeheader()
+    if round_digits:
+        for row_id in range(len(data)):
+            new_dict = {}
+            for key, val in data[row_id].items():
+                if isinstance(val, float):
+                    new_dict[key] = round(val, round_digits)
+                else:
+                    new_dict[key] = val
+            data[row_id] = new_dict
+    writer.writerows(data)
 
 
 def list_to_csv(data, out_fname, delimiter=',', mode='w', quote_style=csv.QUOTE_NONNUMERIC,
@@ -856,6 +884,8 @@ def list_to_csv(data, out_fname, delimiter=',', mode='w', quote_style=csv.QUOTE_
     """
     with open(out_fname, mode) as csv_file:
         writer = csv.writer(csv_file, delimiter=delimiter, quoting=quote_style)
+        # TODO: see if can replace the "round_digits" if with the excetue, but need to write test first
+        # execute_csv_dict_writer(data, 'n', round_digits, writer)
         if round_digits:
             for row_id in range(len(data)):
                 new_row = []
