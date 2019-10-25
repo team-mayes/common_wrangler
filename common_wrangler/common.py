@@ -884,7 +884,7 @@ def list_to_csv(data, out_fname, delimiter=',', mode='w', quote_style=csv.QUOTE_
     """
     with open(out_fname, mode) as csv_file:
         writer = csv.writer(csv_file, delimiter=delimiter, quoting=quote_style)
-        # TODO: see if can replace the "round_digits" if with the excetue, but need to write test first
+        # TODO: see if can replace the "round_digits" if with the execute, but need to write test first
         # execute_csv_dict_writer(data, 'n', round_digits, writer)
         if round_digits:
             for row_id in range(len(data)):

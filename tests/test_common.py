@@ -16,7 +16,7 @@ from common_wrangler.common import (find_files_by_dir, read_csv, get_fname_root,
                                     read_csv_header, fmt_row_data, calc_k, diff_lines, create_out_fname, dequote,
                                     quote, conv_raw_val, pbc_calc_vector, pbc_vector_avg, read_csv_dict,
                                     InvalidDataError, unit_vector, vec_angle, vec_dihedral, check_file_and_file_list,
-                                    make_dir, NotFoundError, silent_remove, list_to_file)
+                                    make_dir, NotFoundError, silent_remove, list_to_file, longest_common_substring)
 import logging
 
 __author__ = 'mayes'
@@ -557,3 +557,24 @@ class TestVectorPBCMath(unittest.TestCase):
 
     def testDihedral(self):
         self.assertAlmostEqual(vec_dihedral(VEC_21, VEC_23, VEC_34), DIH_1234)
+
+
+class TestLongestCommonSubstring(unittest.TestCase):
+    def testSameLength(self):
+        s1 = "small fur"
+        s2 = "Small Fur"
+        result = longest_common_substring(s1, s2)
+        self.assertTrue(result == "mall ")
+        print(result)
+
+    def testDiffLength(self):
+        s1 = "small fur"
+        s2 = "very small fur"
+        result = longest_common_substring(s1, s2)
+        self.assertTrue(result == "small fur")
+
+    def testLongerFirst(self):
+        s1 = "1 small fur"
+        s2 = "very small fur!"
+        result = longest_common_substring(s2, s1)
+        self.assertTrue(result == " small fur")

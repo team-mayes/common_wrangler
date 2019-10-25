@@ -160,7 +160,7 @@ def parse_cmdline(argv=None):
     return args, GOOD_RET
 
 
-def fill_save_tpl(cfg, tpl_str, tpl_vals_dict, tpl_name, filled_tpl_name, print_info=True):
+def fill_save_tpl(cfg, tpl_str, tpl_vals_dict, tpl_name, filled_tpl_name, missing_key_list=None, print_info=True):
     """
     use the dictionary to make the file name and filled template. Then save the file.
     @param cfg: configuration for run
@@ -169,12 +169,31 @@ def fill_save_tpl(cfg, tpl_str, tpl_vals_dict, tpl_name, filled_tpl_name, print_
     @param tpl_name: the cfg key for the template file name
     @param filled_tpl_name: the cfg key for the filled template file name
     @param print_info: print to standard out when a file is printed
+    @param missing_key_list: default is empty list; Gather from the last step (trying to calculate params from
+      other params) any other missing params before throwing error
     """
+    # make IDE happy
+    if missing_key_list is None:
+        missing_key_list = []
+    filled_tpl_str = ''
+
     try:
         filled_tpl_str = tpl_str.format(**tpl_vals_dict)
     except KeyError as e:
-        raise KeyError("Key '{}' not found in the configuration but required for template file: {}"
-                       "".format(e.args[0], tpl_name))
+        still_error = True
+        missing_key = e.args[0]
+        # catch all the missing keys
+        while still_error:
+            missing_key_list.append(missing_key)
+            tpl_vals_dict[missing_key] = 2
+            try:
+                filled_tpl_str = tpl_str.format(**tpl_vals_dict)
+                still_error = False
+            except KeyError as e:
+                missing_key = e.args[0]
+    if len(missing_key_list) > 0:
+        raise KeyError("Key(s) '{}' not found in the configuration but required for template file: {}"
+                       "".format("', '".join(missing_key_list), tpl_name))
 
     try:
         filled_fname_str = filled_tpl_name.format(**tpl_vals_dict)
@@ -197,6 +216,7 @@ def make_tpl(cfg, tpl_name, filled_tpl_name):
     tpl_str = read_tpl(tpl_name)
     tpl_vals_dict = {}
 
+    missing_key_list = []
     for value_set in itertools.product(*cfg[TPL_VALS].values()):
         for param, val in zip(cfg[TPL_VALS].keys(), value_set):
             tpl_vals_dict[param] = val
@@ -205,8 +225,10 @@ def make_tpl(cfg, tpl_name, filled_tpl_name):
             try:
                 string_to_eval = tpl_vals_dict[eq_param].format(**tpl_vals_dict)
             except KeyError as e:
-                raise KeyError("Missing parameter value {} needed to evaluate '{}' for the parameter '{}'."
-                               "".format(e, tpl_vals_dict[eq_param], eq_param))
+                # to let it move on to the next step
+                string_to_eval = '1+1'
+                missing_key_list.append(e.args[0])
+
             try:
                 tpl_vals_dict[eq_param] = eval(string_to_eval)
             except NameError:
@@ -214,7 +236,7 @@ def make_tpl(cfg, tpl_name, filled_tpl_name):
                                        "'{}'. Check order of equation entry and/or input parameter values."
                                        "".format(string_to_eval, eq_param))
 
-        fill_save_tpl(cfg, tpl_str, tpl_vals_dict, tpl_name, filled_tpl_name)
+        fill_save_tpl(cfg, tpl_str, tpl_vals_dict, tpl_name, filled_tpl_name, missing_key_list=missing_key_list)
 
 
 def main(argv=None):

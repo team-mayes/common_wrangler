@@ -44,6 +44,7 @@ GOOD_MULTI_PAR_OUT6 = os.path.join(SUB_DATA_DIR, 'evb_test_multi6_good.par')
 PAR_EQ_INI = os.path.join(SUB_DATA_DIR, 'make_eq_par.ini')
 PAR_EQ_WRONG_ORDER_INI = os.path.join(SUB_DATA_DIR, 'make_eq_par_wrong_order.ini')
 PAR_EQ_MISS_PARAM_INI = os.path.join(SUB_DATA_DIR, 'make_eq_par_missing_param.ini')
+PAR_EQ_MISS_PARAMS_INI = os.path.join(SUB_DATA_DIR, 'make_eq_par_missing_params.ini')
 
 # for testing to fail well
 MISSING_DEF_TPL_INI = os.path.join(SUB_DATA_DIR, 'missing_def_tpl.ini')
@@ -99,10 +100,11 @@ class TestMakeParFailWell(unittest.TestCase):
     def testMissingTplKey(self):
         # make sure it gracefully fails when a template key is missing
         test_input = ["-c", MISSING_TPL_KEY_INI]
+        # main(test_input)
         if logger.isEnabledFor(logging.DEBUG):
             main(test_input)
         with capture_stderr(main, test_input) as output:
-            self.assertTrue('required for template file' in output)
+            self.assertTrue("Key(s) 'vii_b', 'vii_lb', 'vii_b_da', 'vii_cut' not found" in output)
 
     def testValBeforeSection(self):
         # make sure it gracefully fails when a template key is missing
@@ -144,10 +146,27 @@ class TestMakeParFailWell(unittest.TestCase):
 
     def testMakeParEqMissingParam(self):
         test_input = ["-c", PAR_EQ_MISS_PARAM_INI]
+        # main(test_input)
         if logger.isEnabledFor(logging.DEBUG):
             main(test_input)
         with capture_stderr(main, test_input) as output:
-            self.assertTrue('Missing parameter value' in output)
+            self.assertTrue("Key(s) 'b_da' not found" in output)
+
+    def testMakeParEqMissingParams(self):
+        test_input = ["-c", PAR_EQ_MISS_PARAMS_INI]
+        # main(test_input)
+        if logger.isEnabledFor(logging.DEBUG):
+            main(test_input)
+        with capture_stderr(main, test_input) as output:
+            self.assertTrue("Key(s) 'b_da', 'voo_b' not found" in output)
+
+    def testMissingConfig(self):
+        test_input = ["-c", "ghost.ini"]
+        # main(test_input)
+        if logger.isEnabledFor(logging.DEBUG):
+            main(test_input)
+        with capture_stderr(main, test_input) as output:
+            self.assertTrue("Could not read file" in output)
 
 
 class TestMain(unittest.TestCase):
