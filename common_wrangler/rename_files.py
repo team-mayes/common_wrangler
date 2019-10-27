@@ -17,7 +17,7 @@ from common_wrangler.common import (GOOD_RET, INPUT_ERROR, warning)
 
 __author__ = 'hmayes'
 
-logging.basicConfig(level=logging.INFO)
+# logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Constants #
