@@ -4,9 +4,7 @@
 """
 import os
 import unittest
-
 import shutil
-
 from common_wrangler.rename_files import main
 from common_wrangler.common import (capture_stdout, capture_stderr, silent_remove)
 import logging
@@ -86,13 +84,12 @@ def count_files(fname_list):
 
 def clean_then_make_files(list_to_clean, fname_to_make_list, dir_list):
     """
-    Put this repeated tast in a
+    Put this repeated task in a method
     :param list_to_clean: list with file and/or directory names
     :param fname_to_make_list: list of file names
     :param dir_list: list of one or more names of directories where files should be created
     :return: initial_fnames: list of locations of created files
     """
-    initial_fnames = []
     # start clean
     for f_or_dir_name in list_to_clean:
         silent_remove(f_or_dir_name)
