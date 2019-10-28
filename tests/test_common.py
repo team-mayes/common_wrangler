@@ -9,14 +9,13 @@ import os
 import shutil
 import tempfile
 import unittest
-
-from common_wrangler import capture_stdout, print_csv_stdout
-
 from common_wrangler.common import (find_files_by_dir, read_csv, get_fname_root, write_csv, str_to_bool,
                                     read_csv_header, fmt_row_data, calc_k, diff_lines, create_out_fname, dequote,
                                     quote, conv_raw_val, pbc_calc_vector, pbc_vector_avg, read_csv_dict,
                                     InvalidDataError, unit_vector, vec_angle, vec_dihedral, check_file_and_file_list,
-                                    make_dir, NotFoundError, silent_remove, list_to_file, longest_common_substring)
+                                    make_dir, NotFoundError, silent_remove, list_to_file, longest_common_substring,
+                                    capture_stdout, print_csv_stdout, read_tpl, TemplateNotReadableError,
+                                    file_rows_to_list, round_to_12th_decimal)
 import logging
 
 __author__ = 'mayes'
@@ -256,6 +255,39 @@ class TestReadFirstRow(unittest.TestCase):
 
     def testEmptyFile(self):
         self.assertIsNone(read_csv_header(EMPTY_CSV))
+
+
+class TestIOMethods(unittest.TestCase):
+    def testReadTplNoSuchTpl(self):
+        try:
+            tpl_str = read_tpl("ghost.tpl")
+            self.assertFalse(tpl_str)
+        except TemplateNotReadableError as e:
+            self.assertTrue("Couldn't read template at: 'ghost.tpl'" in e.args[0])
+
+    def testMakeDir(self):
+        # provide a file name not a dir
+        try:
+            make_dir(ELEM_DICT_FILE)
+            # should raise exception before next line
+            self.assertFalse(True)
+        except NotFoundError as e:
+            self.assertTrue("Resource exists and is not a dir" in e.args[0])
+
+    def testFileRowsToList(self):
+        # this function should skip blank lines
+        test_rows = file_rows_to_list(FILE_LIST)
+        good_rows = ['tests/test_data/common/diff_lines_base_file.csv',
+                     'tests/test_data/common/diff_lines_miss_line.csv',
+                     'tests/test_data/common/diff_lines_miss_val.csv',
+                     'tests/test_data/common/diff_lines_one_nan.csv']
+        self.assertTrue(test_rows == good_rows)
+
+    def testRoundTo12thDecimal(self):
+        # helps in printing, so files aren't different only due to expected machine precision (:.12f, but keep as float)
+        result = round_to_12th_decimal(8.76541113456789012345)
+        good_result = 8.765411134568
+        self.assertTrue(result == good_result)
 
 
 class TestFnameManipulation(unittest.TestCase):

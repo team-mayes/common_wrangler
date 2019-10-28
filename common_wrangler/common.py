@@ -215,6 +215,8 @@ def calc_k(temp, delta_gibbs):
     return BOLTZ_CONST * temp / PLANCK_CONST * math.exp(-delta_gibbs / (RG * temp))
 
 
+# TODO: test calc_dist
+#   maybe move to md_common: pbc_dist, first_pbc_image
 def calc_dist(a, b):
     return np.linalg.norm(np.subtract(a, b))
 
@@ -309,6 +311,7 @@ def vec_dihedral(vec_ba, vec_bc, vec_cd):
 
 # Other #
 
+# TODO: find if ever used, and if so, test
 def chunk(seq, chunk_size, process=iter):
     """Yields items from an iterator in iterable chunks.
     From https://gist.github.com/ksamuel/1275417
@@ -351,7 +354,7 @@ def make_dir(tgt_dir):
     if not os.path.exists(tgt_dir):
         os.makedirs(tgt_dir)
     elif not os.path.isdir(tgt_dir):
-        raise NotFoundError("Resource {} exists and is not a dir".format(tgt_dir))
+        raise NotFoundError("Resource exists and is not a dir: {}".format(tgt_dir))
 
 
 def file_to_str(f_name):
@@ -391,15 +394,16 @@ def str_to_file(str_val, f_name, mode='w', print_info=False):
         print("Wrote file: {}".format(f_name))
 
 
-def round_to_print(val):
+def round_to_12th_decimal(val):
     """
-    To remove floating point digits that are imprecise due to machine precision
+    To remove floating point digits that are imprecise due to expected machine precision
     @param val: a float
     @return: a float without insignificant digits
     """
     return round(val, SIG_DECIMALS)
 
 
+# TODO: continue adding tests here
 def np_float_array_from_file(data_file, delimiter=" ", header=False, gather_hist=False):
     """
     Adds to the basic np.loadtxt by performing data checks.
