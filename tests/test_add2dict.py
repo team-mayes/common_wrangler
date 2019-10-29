@@ -59,6 +59,7 @@ class TestAdd2Dict(unittest.TestCase):
         test_input = ["oligomer", "-d", TEMP_CUST_DICT]
         try:
             main(test_input)
+            self.assertFalse(diff_lines(TEMP_CUST_DICT, GOOD_CUST_DICT1))
         finally:
             silent_remove(TEMP_CUST_DICT, DISABLE_REMOVE)
             pass
