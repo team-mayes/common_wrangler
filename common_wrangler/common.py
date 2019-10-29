@@ -1204,9 +1204,9 @@ def single_quote(s):
     Converts a variable into a quoted string
     """
     if s[0] == s[-1]:
-        if s.startswith("'"):
+        if s.startswith("'") and s.endswith("'"):
             return str(s)
-        elif s.startswith('"'):
+        elif s.startswith('"') and s.endswith('"'):
             s = dequote(s)
     return "'" + str(s) + "'"
 
@@ -1317,6 +1317,7 @@ def diff_lines(floc1, floc2, delimiter=","):
 
 # Data Structures #
 
+# TODO: Continue testing here
 def unique_list(a_list):
     """ Creates an ordered list from a list of tuples or other hashable items.
     From https://code.activestate.com/recipes/576694/#c6

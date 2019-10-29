@@ -30,14 +30,13 @@ setup(
                   },
 
     entry_points={'console_scripts': ['rename_files = common_wrangler.rename_files:main',
-                                      'common = common_wrangler.common:main',
+                                      'add2dict = common_wrangler.add2dict:main',
                                       'fill_tpl = common_wrangler.fill_tpl:main'
                                       ],
                   },     package_dir={'common_wrangler': 'common_wrangler'},
 
     test_suite='tests', install_requires=['numpy', 'six', 'matplotlib']
     # Additional entries you may want simply uncomment the lines you want and fill in the data
-    # author_email='me@place.org',      # Author email
     # url='http://www.my_package.com',  # Website
     # install_requires=[],              # Required packages, pulls from pip if needed; do not use for Conda deployment
     # platforms=['Linux',

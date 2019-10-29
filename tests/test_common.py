@@ -15,7 +15,7 @@ from common_wrangler.common import (find_files_by_dir, read_csv, get_fname_root,
                                     InvalidDataError, unit_vector, vec_angle, vec_dihedral, check_file_and_file_list,
                                     make_dir, NotFoundError, silent_remove, list_to_file, longest_common_substring,
                                     capture_stdout, print_csv_stdout, read_tpl, TemplateNotReadableError,
-                                    file_rows_to_list, round_to_12th_decimal)
+                                    file_rows_to_list, round_to_12th_decimal, single_quote)
 import logging
 
 __author__ = 'mayes'
@@ -536,6 +536,15 @@ class TestQuoteDeQuote(unittest.TestCase):
 
     def testDequoteUnmatched(self):
         self.assertTrue(dequote('"' + '(0, 1)') == '"(0, 1)')
+
+    def testSingleQuote(self):
+        self.assertTrue(single_quote("(0, 1)") == "'(0, 1)'")
+
+    def testSingleQuoteAlreadyDone(self):
+        self.assertTrue(single_quote("'(0, 1)'") == "'(0, 1)'")
+
+    def testSingleQuoteFromDouble(self):
+        self.assertTrue(single_quote('"(0, 1)"') == "'(0, 1)'")
 
 
 class TestConversions(unittest.TestCase):
