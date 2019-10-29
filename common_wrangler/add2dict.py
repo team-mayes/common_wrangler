@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 # Constants #
 
 # Defaults #
-DEF_DICT_LOC = '/Users/hmayes/Dropbox/NREL/code'
+DEF_DICT_LOC = '/Users/hmayes/Dropbox/NREL/code/hmayes_cust.dic'
 
 # Logic #
 
