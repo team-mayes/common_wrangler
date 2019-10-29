@@ -69,8 +69,9 @@ def main(argv=None):
         return ret
 
     try:
+        word_to_add = args.word.lower()
         dict_set = set(file_rows_to_list(args.dict_loc))
-        dict_set.add(args.word)
+        dict_set.add(word_to_add)
         dict_list = list(dict_set)
         dict_list.sort()
         list_to_file(dict_list, args.dict_loc)

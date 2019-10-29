@@ -55,8 +55,9 @@ class TestAdd2DictNoOutput(unittest.TestCase):
 
 class TestAdd2Dict(unittest.TestCase):
     def testNormalUse(self):
+        # also checks that makes word lowercase when added
         shutil.copyfile(CUST_DICT, TEMP_CUST_DICT)
-        test_input = ["oligomer", "-d", TEMP_CUST_DICT]
+        test_input = ["Oligomer", "-d", TEMP_CUST_DICT]
         try:
             main(test_input)
             self.assertFalse(diff_lines(TEMP_CUST_DICT, GOOD_CUST_DICT1))
