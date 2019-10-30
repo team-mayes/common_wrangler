@@ -1,11 +1,11 @@
 # coding=utf-8
 
 """
-Common methods for this project.
+Common methods for this project and others in the "wrangler" series
 """
 
 from __future__ import print_function, division
-# Util Methods #
+
 import argparse
 import collections
 import csv
@@ -24,7 +24,6 @@ from shutil import copy2, Error, copystat
 import six
 import sys
 from contextlib import contextmanager
-# from matplotlib import rc
 import matplotlib.pyplot as plt
 from matplotlib.ticker import AutoMinorLocator
 from matplotlib.patches import Rectangle
@@ -47,6 +46,7 @@ H = 6.626070e-34  # [Js]
 RG = 0.001985877534
 
 EHPART_TO_KCAL_MOL = 627.5094709  # [kcal/mol/(Eh/part)]
+KCAL_TO_J = 4184 / 6.022140857e23
 
 XYZ_ORIGIN = np.zeros(3)
 
