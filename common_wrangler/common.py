@@ -215,12 +215,12 @@ def calc_k(temp, delta_gibbs):
     return BOLTZ_CONST * temp / PLANCK_CONST * math.exp(-delta_gibbs / (RG * temp))
 
 
-# TODO: test calc_dist
-#   maybe move to md_common: pbc_dist, first_pbc_image
 def calc_dist(a, b):
     return np.linalg.norm(np.subtract(a, b))
 
 
+# TODO: add test?
+#   maybe move to md_common: pbc_dist, first_pbc_image
 def pbc_dist(a, b, box):
     # TODO: make a test that ensures the distance calculated is <= sqrt(sqrt((a/2)^2+(b/2)^2) + (c/2)^2)) ?
     return np.linalg.norm(pbc_calc_vector(a, b, box))
@@ -464,8 +464,16 @@ def np_float_array_from_file(data_file, delimiter=" ", header=False, gather_hist
         raise InvalidDataError("File contains a vector, not an array of floats: {}\n".format(data_file))
     if np.isnan(data_array).any():
         warning("Encountered entry (or entries) which could not be converted to a float. "
-                "'nan' will be returned for the stats for that column.")
-    return data_array, header_row, hist_data
+                "'nan' will be returned for those entries.")
+    if len(hist_data) > 0 or header_row:
+        if len(hist_data) > 0 and header_row:
+            return data_array, header_row, hist_data
+        elif header_row:
+            return data_array, header_row
+        else:
+            return data_array, hist_data
+    else:
+        return data_array
 
 
 def read_csv_to_list(data_file, delimiter=',', header=False):

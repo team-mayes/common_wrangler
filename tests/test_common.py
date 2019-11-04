@@ -15,7 +15,8 @@ from common_wrangler.common import (find_files_by_dir, read_csv, get_fname_root,
                                     InvalidDataError, unit_vector, vec_angle, vec_dihedral, check_file_and_file_list,
                                     make_dir, NotFoundError, silent_remove, list_to_file, longest_common_substring,
                                     capture_stdout, print_csv_stdout, read_tpl, TemplateNotReadableError,
-                                    file_rows_to_list, round_to_12th_decimal, single_quote)
+                                    file_rows_to_list, round_to_12th_decimal, single_quote, calc_dist,
+                                    np_float_array_from_file)
 import logging
 
 __author__ = 'mayes'
@@ -46,6 +47,17 @@ EMPTY_CSV = os.path.join(SUB_DATA_DIR, 'empty.csv')
 
 FILE_LIST = os.path.join(SUB_DATA_DIR, 'file_list.txt')
 FILE_LIST_W_MISSING_FILE = os.path.join(SUB_DATA_DIR, 'file_list_with_ghost.txt')
+
+BOX_SIZES_NO_HEADER_SPACE_SEP = os.path.join(SUB_DATA_DIR, 'qm_box_sizes.txt')
+BOX_SIZES_HEADER_SPACE_SEP = os.path.join(SUB_DATA_DIR, 'qm_box_sizes_header.txt')
+BOX_SIZES_NO_HEADER_COMMA_SEP = os.path.join(SUB_DATA_DIR, 'qm_box_sizes.csv')
+BOX_SIZES_HEADER_COMMA_SEP = os.path.join(SUB_DATA_DIR, 'qm_box_sizes_header.csv')
+GOOD_BOX_NDARRAY = np.asarray([[11.89100027, 15.36799955, 18.10500002], [11.375, 14.99599981, 17.98800039],
+                               [11.10300016, 15.60500002, 18.31400013], [10., 14.995, 10.98800039]])
+GOOD_BOX_NDARRAY_ROW_NAN = np.asarray([[np.nan, np.nan, np.nan],
+                                       [11.89100027, 15.36799955, 18.10500002], [11.375, 14.99599981, 17.98800039],
+                                       [11.10300016, 15.60500002, 18.31400013], [10., 14.995, 10.98800039]])
+
 
 OUT_PFX = 'rad_'
 
@@ -453,6 +465,32 @@ class TestWriteCsv(unittest.TestCase):
             self.assertTrue(output_list == good_output_list)
 
 
+class TestNDARRAYFromFile(unittest.TestCase):
+    def testReadSpaceSeparated(self):
+        test_array = np_float_array_from_file(BOX_SIZES_NO_HEADER_SPACE_SEP)
+        self.assertTrue(np.allclose(test_array, GOOD_BOX_NDARRAY))
+
+    def testReadSpaceSeparatedWithHeaderFlagged(self):
+        good_header_row = ['#', 'x', 'y', 'z']
+        test_array, test_header = np_float_array_from_file(BOX_SIZES_HEADER_SPACE_SEP, header=True)
+        self.assertEqual(test_header, good_header_row)
+        self.assertTrue(np.allclose(test_array, GOOD_BOX_NDARRAY))
+
+    def testReadCommaSeparated(self):
+        test_array = np_float_array_from_file(BOX_SIZES_NO_HEADER_COMMA_SEP, delimiter=',')
+        self.assertTrue(np.allclose(test_array, GOOD_BOX_NDARRAY))
+
+    def testReadCommaSeparatedWithHeaderNotFlagged(self):
+        test_array = np_float_array_from_file(BOX_SIZES_HEADER_COMMA_SEP, delimiter=',', )
+        self.assertTrue(np.allclose(test_array, GOOD_BOX_NDARRAY_ROW_NAN, equal_nan=True))
+
+    def testReadCommaSeparatedWithHeaderFlagged(self):
+        good_header_row = ['x', 'y', 'z']
+        test_array, test_header = np_float_array_from_file(BOX_SIZES_HEADER_COMMA_SEP, delimiter=',', header=True)
+        self.assertEqual(test_header, good_header_row)
+        self.assertTrue(np.allclose(test_array, GOOD_BOX_NDARRAY))
+
+
 class TestListToFile(unittest.TestCase):
     def testWriteAppendList(self):
         list_of_strings = ['hello', 'friends']
@@ -573,6 +611,7 @@ class TestConversions(unittest.TestCase):
 
 
 class TestVectorPBCMath(unittest.TestCase):
+    # TODO: consider moving to md_wrangler common
     def testSubtractInSameImage(self):
         self.assertTrue(np.allclose(pbc_calc_vector(VEC_1, VEC_2, PBC_BOX), VEC_21))
         self.assertTrue(np.allclose(pbc_calc_vector(VEC_3, VEC_2, PBC_BOX), VEC_23))
@@ -598,6 +637,13 @@ class TestVectorPBCMath(unittest.TestCase):
 
     def testDihedral(self):
         self.assertAlmostEqual(vec_dihedral(VEC_21, VEC_23, VEC_34), DIH_1234)
+
+    def testDist(self):
+        good_dist = 1.2589809371074687
+        dist_12 = calc_dist(VEC_1, VEC_2)
+        self.assertAlmostEqual(dist_12, good_dist)
+        dist_21 = calc_dist(VEC_2, VEC_1)
+        self.assertAlmostEqual(dist_21, good_dist)
 
 
 class TestLongestCommonSubstring(unittest.TestCase):
