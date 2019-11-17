@@ -1,9 +1,6 @@
 common_wrangler
 ==============================
-[//]: # (Badges)
-[![Travis Build Status](https://travis-ci.org/REPLACE_WITH_OWNER_ACCOUNT/common_wrangler.png)](https://travis-ci.org/REPLACE_WITH_OWNER_ACCOUNT/common_wrangler)
-[![AppVeyor Build status](https://ci.appveyor.com/api/projects/status/REPLACE_WITH_APPVEYOR_LINK/branch/master?svg=true)](https://ci.appveyor.com/project/REPLACE_WITH_OWNER_ACCOUNT/common_wrangler/branch/master)
-[![codecov](https://codecov.io/gh/REPLACE_WITH_OWNER_ACCOUNT/common_wrangler/branch/master/graph/badge.svg)](https://codecov.io/gh/REPLACE_WITH_OWNER_ACCOUNT/common_wrangler/branch/master)
+[![Actions Status](https://github.com/team-mayes/common_wrangler/workflows/PythonCI/badge.svg)](https://github.com/cmayes/cmayes-common/actions)
 
 Scripts for file and data manipulation, as well as common scripts used in this project as well as gaussian_wrangler and md_wrangler
 
