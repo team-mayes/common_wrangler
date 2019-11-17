@@ -19,7 +19,8 @@
 
 # -- Project information -----------------------------------------------------
 
-project = 'Scripts for file and data manipulation, as well as common scripts used in this project as well as gaussian_wrangler and md_wrangler'
+project = 'Scripts for file and data manipulation, as well as common scripts used in this project as well as ' \
+          'gaussian_wrangler and md_wrangler'
 copyright = "2019, hmayes"
 author = 'hmayes'
 
@@ -152,7 +153,8 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
     (master_doc, 'common_wrangler', 'common_wrangler Documentation',
-     author, 'common_wrangler', 'Scripts for file and data manipulation, as well as common scripts used in this project as well as gaussian_wrangler and md_wrangler',
+     author, 'common_wrangler', 'Scripts for file and data manipulation, as well as common scripts used in this '
+                                'project as well as gaussian_wrangler and md_wrangler',
      'Miscellaneous'),
 ]
 

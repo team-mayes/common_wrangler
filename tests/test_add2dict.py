@@ -64,3 +64,14 @@ class TestAdd2Dict(unittest.TestCase):
         finally:
             silent_remove(TEMP_CUST_DICT, DISABLE_REMOVE)
             pass
+
+    def testAddThreeWords(self):
+        # also checks that makes word lowercase when added
+        shutil.copyfile(CUST_DICT, TEMP_CUST_DICT)
+        test_input = ["Oligomer", "lactone", "ketone", "-d", TEMP_CUST_DICT]
+        try:
+            main(test_input)
+            # self.assertFalse(diff_lines(TEMP_CUST_DICT, GOOD_CUST_DICT1))
+        finally:
+            # silent_remove(TEMP_CUST_DICT, DISABLE_REMOVE)
+            pass

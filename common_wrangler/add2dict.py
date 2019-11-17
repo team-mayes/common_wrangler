@@ -47,7 +47,7 @@ def parse_cmdline(argv):
 
     args = None
     try:
-        args = parser.parse_args(argv)
+        args = parser.parse_known_args(argv)
     except SystemExit as e:
         if hasattr(e, 'code') and e.code == 0:
             return args, GOOD_RET
@@ -69,12 +69,16 @@ def main(argv=None):
         return ret
 
     try:
-        word_to_add = args.word.lower()
-        dict_set = set(file_rows_to_list(args.dict_loc))
-        dict_set.add(word_to_add)
+        # set prevents duplicates
+        dict_set = set(file_rows_to_list(args[0].dict_loc))
+        for input_word in [args[0].word] + args[1]:
+            # keep consistency of lower-case words only
+            word_to_add = input_word.lower()
+            dict_set.add(word_to_add)
+        # convert set to list to sort and write to file
         dict_list = list(dict_set)
         dict_list.sort()
-        list_to_file(dict_list, args.dict_loc)
+        list_to_file(dict_list, args[0].dict_loc)
     except IOError as e:
         warning("Problems reading file: {}".format(e))
         return IO_ERROR

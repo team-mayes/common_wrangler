@@ -2,7 +2,7 @@ common_wrangler
 ==============================
 [![Actions Status](https://github.com/team-mayes/common_wrangler/workflows/PythonCI/badge.svg)](https://github.com/cmayes/cmayes-common/actions)
 
-Scripts for file and data manipulation, as well as common scripts used in this project as well as gaussian_wrangler and md_wrangler
+Scripts for file and data manipulation, as well as common scripts used in this project as well as gaussian_wrangler, ligninkmc, and md_wrangler
 
 ### Copyright
 
