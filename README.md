@@ -4,7 +4,6 @@ common_wrangler
 [![PyPI version](https://badge.fury.io/py/common-wrangler.svg)](https://badge.fury.io/py/common-wrangler)
 [![codecov](https://codecov.io/gh/team-mayes/common_wrangler/branch/master/graph/badge.svg)](https://codecov.io/gh/team-mayes/common_wrangler)
 
-
 Scripts for file and data manipulation, as well as common scripts used in this project as well as gaussian_wrangler, ligninkmc, and md_wrangler
 
 ### Copyright
