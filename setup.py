@@ -12,7 +12,7 @@ DOCLINES = __doc__.split("\n")
 setup(
     # Self-descriptive entries which should always be present
     name='common_wrangler',
-    author='Heather B Mayes',
+    author='Heather B. Mayes',
     author_email='hmayes@hmayes.com',
     description=DOCLINES[0],
     long_description="\n".join(DOCLINES[2:]),

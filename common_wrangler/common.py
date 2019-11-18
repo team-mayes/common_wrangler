@@ -592,6 +592,9 @@ def create_out_fname(src_file, prefix='', suffix='', remove_prefix=None, base_di
     if ext is None:
         ext = os.path.splitext(src_file)[1]
 
+    if not ext.startswith("."):
+        ext = "." + ext
+
     return os.path.abspath(os.path.join(base_dir, prefix + base_name + suffix + ext))
 
 

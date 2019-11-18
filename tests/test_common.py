@@ -16,7 +16,7 @@ from common_wrangler.common import (find_files_by_dir, read_csv, get_fname_root,
                                     make_dir, NotFoundError, silent_remove, list_to_file, longest_common_substring,
                                     capture_stdout, print_csv_stdout, read_tpl, TemplateNotReadableError,
                                     file_rows_to_list, round_to_12th_decimal, single_quote, calc_dist,
-                                    np_float_array_from_file)
+                                    np_float_array_from_file, capture_stderr)
 import logging
 
 __author__ = 'mayes'
@@ -57,6 +57,9 @@ GOOD_BOX_NDARRAY = np.asarray([[11.89100027, 15.36799955, 18.10500002], [11.375,
 GOOD_BOX_NDARRAY_ROW_NAN = np.asarray([[np.nan, np.nan, np.nan],
                                        [11.89100027, 15.36799955, 18.10500002], [11.375, 14.99599981, 17.98800039],
                                        [11.10300016, 15.60500002, 18.31400013], [10., 14.995, 10.98800039]])
+
+VECTOR_VALS = os.path.join(SUB_DATA_DIR, 'vector_input.txt')
+FLOAT_AND_NON = os.path.join(SUB_DATA_DIR, 'msm_sum_output.csv')
 
 
 OUT_PFX = 'rad_'
@@ -320,10 +323,19 @@ class TestFnameManipulation(unittest.TestCase):
         new_name = create_out_fname(beginning_name, prefix=OUT_PFX, remove_prefix=prefix_to_remove)
         self.assertTrue(new_name == good_end_name)
 
+    def testOutFnameGiveExt(self):
+        beginning_name = os.path.join(DATA_DIR, ORIG_WHAM_ROOT)
+        good_end_name = os.path.join(DATA_DIR, ORIG_WHAM_FNAME)
+        new_name = create_out_fname(beginning_name, ext='.txt')
+        self.assertTrue(new_name == good_end_name)
+
+    def testOutFnameGiveExtNoPeriod(self):
+        beginning_name = os.path.join(DATA_DIR, ORIG_WHAM_ROOT)
+        good_end_name = os.path.join(DATA_DIR, ORIG_WHAM_FNAME)
+        new_name = create_out_fname(beginning_name, ext='txt')
+        self.assertTrue(new_name == good_end_name)
+
     def testGetRootName(self):
-        """
-        Check for prefix addition.
-        """
         root_name = get_fname_root(ORIG_WHAM_PATH)
         self.assertEqual(root_name, ORIG_WHAM_ROOT)
         self.assertNotEqual(root_name, ORIG_WHAM_FNAME)
@@ -489,6 +501,29 @@ class TestNDARRAYFromFile(unittest.TestCase):
         test_array, test_header = np_float_array_from_file(BOX_SIZES_HEADER_COMMA_SEP, delimiter=',', header=True)
         self.assertEqual(test_header, good_header_row)
         self.assertTrue(np.allclose(test_array, GOOD_BOX_NDARRAY))
+
+    def testReadNDArrayVectorError(self):
+        caught_error = False
+        try:
+            np_float_array_from_file(VECTOR_VALS)
+        except InvalidDataError as e:
+            caught_error = True
+            self.assertTrue('File contains a vector' in e.args[0])
+        self.assertTrue(caught_error)
+
+    def testReadNDArrayValueError(self):
+        # TODO: copy this but test and use hist option, to improve coverage
+        with capture_stderr(np_float_array_from_file, FLOAT_AND_NON, header=1, delimiter=",") as output:
+            self.assertTrue("'nan' will be returned" in output)
+        good_header = ['pka_203', '(0, 1)', '(0, 1)_max_rls', '(0, -1)_max_rls', '(0, 1)_max_path',
+                       '(0, 1)_max_path_flow']
+        good_data_array = np.asarray([[6.10918105, 1.04301557, np.nan, np.nan, np.nan, 0.91252645],
+                           [4.33909619, 1.09081880, np.nan, np.nan, np.nan, 0.87450673],
+                           [5.54534891, 1.06042369, np.nan, np.nan, np.nan, 0.65756597],
+                           [5.29792317, 1.08224906, np.nan, np.nan, np.nan, 0.80011857],
+                           [5.99200576, 1.06021529, np.nan, 0., np.nan, 0.48421892]])
+        data_array, header_row = np_float_array_from_file(FLOAT_AND_NON, header=1, delimiter=",")
+        self.assertTrue(np.allclose(data_array, good_data_array, equal_nan=True))
 
 
 class TestListToFile(unittest.TestCase):
