@@ -16,8 +16,16 @@ from common_wrangler.common import (find_files_by_dir, read_csv, get_fname_root,
                                     make_dir, NotFoundError, silent_remove, list_to_file, longest_common_substring,
                                     capture_stdout, print_csv_stdout, read_tpl, TemplateNotReadableError,
                                     file_rows_to_list, round_to_12th_decimal, single_quote, calc_dist,
-                                    np_float_array_from_file, capture_stderr)
+                                    np_float_array_from_file, capture_stderr, round_sig_figs, process_cfg, MAIN_SEC)
 import logging
+
+try:
+    # noinspection PyCompatibility
+    from ConfigParser import ConfigParser, MissingSectionHeaderError
+except ImportError:
+    # noinspection PyCompatibility
+    from configparser import ConfigParser, MissingSectionHeaderError
+
 
 __author__ = 'mayes'
 
@@ -38,6 +46,8 @@ GOOD_ATOM_DICT = {1: 20, 2: 21, 3: 22, 4: 23, 5: 24, 6: 25, 7: 26, 8: 27, 9: 2, 
 
 CSV_FILE = os.path.join(DATA_DIR, SUB_DATA_DIR, 'rad_PMF_last2ns3_1.txt')
 FRENG_TYPES = [float, str]
+
+ONE_KEY_INI = os.path.join(SUB_DATA_DIR, 'one_key_config.ini')
 
 ORIG_WHAM_ROOT = "PMF_last2ns3_1"
 ORIG_WHAM_FNAME = ORIG_WHAM_ROOT + ".txt"
@@ -298,11 +308,24 @@ class TestIOMethods(unittest.TestCase):
                      'tests/test_data/common/diff_lines_one_nan.csv']
         self.assertTrue(test_rows == good_rows)
 
+
+class TestRoundingToSigFig(unittest.TestCase):
     def testRoundTo12thDecimal(self):
         # helps in printing, so files aren't different only due to expected machine precision (:.12f, but keep as float)
         result = round_to_12th_decimal(8.76541113456789012345)
         good_result = 8.765411134568
         self.assertTrue(result == good_result)
+
+    def testStandardUse(self):
+        self.assertAlmostEqual(round_sig_figs(1111.111111111), 1111.11)
+
+    def testSpecifySifFigs(self):
+        self.assertAlmostEqual(round_sig_figs(1111.111111111, sig_figs=3), 1110.0)
+
+    def testIngSpecifySifFigs(self):
+        rounded_val = round_sig_figs(111111, sig_figs=3)
+        self.assertIsInstance(rounded_val, int)
+        self.assertEqual(rounded_val, 111000)
 
 
 class TestFnameManipulation(unittest.TestCase):
@@ -518,11 +541,12 @@ class TestNDARRAYFromFile(unittest.TestCase):
         good_header = ['pka_203', '(0, 1)', '(0, 1)_max_rls', '(0, -1)_max_rls', '(0, 1)_max_path',
                        '(0, 1)_max_path_flow']
         good_data_array = np.asarray([[6.10918105, 1.04301557, np.nan, np.nan, np.nan, 0.91252645],
-                           [4.33909619, 1.09081880, np.nan, np.nan, np.nan, 0.87450673],
-                           [5.54534891, 1.06042369, np.nan, np.nan, np.nan, 0.65756597],
-                           [5.29792317, 1.08224906, np.nan, np.nan, np.nan, 0.80011857],
-                           [5.99200576, 1.06021529, np.nan, 0., np.nan, 0.48421892]])
+                                      [4.33909619, 1.09081880, np.nan, np.nan, np.nan, 0.87450673],
+                                      [5.54534891, 1.06042369, np.nan, np.nan, np.nan, 0.65756597],
+                                      [5.29792317, 1.08224906, np.nan, np.nan, np.nan, 0.80011857],
+                                      [5.99200576, 1.06021529, np.nan, 0., np.nan, 0.48421892]])
         data_array, header_row = np_float_array_from_file(FLOAT_AND_NON, header=1, delimiter=",")
+        self.assertTrue(header_row == good_header)
         self.assertTrue(np.allclose(data_array, good_data_array, equal_nan=True))
 
 
@@ -700,3 +724,40 @@ class TestLongestCommonSubstring(unittest.TestCase):
         s2 = "very small fur!"
         result = longest_common_substring(s2, s1)
         self.assertTrue(result == " small fur")
+
+
+class TestReadConfig(unittest.TestCase):
+    # Filling it what not covered by fill_tpl
+    # TODO: add more cfg tests
+    def testExtraKey(self):
+        config = ConfigParser()
+        config.read(ONE_KEY_INI)
+        def_config_vals = {}
+        req_keys = {}
+        cfg_dict = process_cfg(dict(config.items(MAIN_SEC)), def_config_vals, req_keys, store_extra_keys=True)
+        good_cfg_dict = {'ghost': 'ghost'}
+        self.assertTrue(cfg_dict == good_cfg_dict)
+
+    def testMissingReqKey(self):
+        try:
+            message = ""
+            config = ConfigParser()
+            config.read(ONE_KEY_INI)
+            def_config_vals = {'ghost': 'most'}
+            req_keys = {'Learning': bool}
+            process_cfg(dict(config.items(MAIN_SEC)), def_config_vals, req_keys)
+        except KeyError as e:
+            message = e.args[0]
+        self.assertTrue("Missing config val for key" in message)
+
+    def testWrongTypeReqKey(self):
+        try:
+            message = ""
+            config = ConfigParser()
+            config.read(ONE_KEY_INI)
+            def_config_vals = {}
+            req_keys = {'ghost': int}
+            process_cfg(dict(config.items(MAIN_SEC)), def_config_vals, req_keys)
+        except InvalidDataError as e:
+            message = e.args[0]
+        self.assertTrue("Problem with config vals on key 'ghost'" in message)

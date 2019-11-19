@@ -23,6 +23,7 @@ PAR_INI = os.path.join(SUB_DATA_DIR, 'make_par.ini')
 PAR_NO_NEW_FILE_NAME_INI = os.path.join(SUB_DATA_DIR, 'no_new_fname.ini')
 PAR_FNAME = 'evb_test.par'
 PAR_OUT = os.path.join(SUB_DATA_DIR, PAR_FNAME)
+
 GOOD_PAR_OUT = os.path.join(SUB_DATA_DIR, 'evb_test_good.par')
 
 PAR_ONE_MULTI_INI = os.path.join(SUB_DATA_DIR, 'make_one_multi_par.ini')

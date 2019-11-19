@@ -403,6 +403,26 @@ def round_to_12th_decimal(val):
     return round(val, SIG_DECIMALS)
 
 
+def round_sig_figs(num, sig_figs=6):
+    """
+    Rounds a given float to the specified number of significant figures. It uses the uses a built-in function through
+    formatting, since built-in functions are generally faster.
+    :param num: float or int
+    :param sig_figs: number of significant figures to return
+    :return: float or int (same as given)
+    """
+    # start by making a float even if started as an integer, as the number may be first converted to scientific
+    #    notation, which cannot be directly converted to an int
+    #    scientific notation
+    # Didn't see a clean way to do in python 2.7, so ignoring incompatibility
+    # noinspection PyCompatibility
+    rounded_float = float(f'{num:.{sig_figs}g}')
+    if isinstance(num, int):
+        return int(rounded_float)
+    else:
+        return rounded_float
+
+
 # TODO: continue adding tests here
 def np_float_array_from_file(data_file, delimiter=" ", header=False, gather_hist=False):
     """
@@ -1183,7 +1203,7 @@ def process_cfg(raw_cfg, def_cfg_vals=None, req_keys=None, int_list=True, store_
     except KeyError as e:
         raise KeyError("Missing config val for key '{}'".format(key, e))
     except Exception as e:
-        raise InvalidDataError('Problem with config vals on key {}: {}'.format(key, e))
+        raise InvalidDataError("Problem with config vals on key '{}': {}".format(key, e))
 
     return proc_cfg
 
