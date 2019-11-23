@@ -12,8 +12,9 @@ DOCLINES = __doc__.split("\n")
 setup(
     # Self-descriptive entries which should always be present
     name='common_wrangler',
-    author='Heather B. Mayes',
+    author='Heather B Mayes',
     author_email='hmayes@hmayes.com',
+    # url='http://www.my_package.com',  # Website
     description=DOCLINES[0],
     long_description="\n".join(DOCLINES[2:]),
     version=versioneer.get_version(),
@@ -38,9 +39,9 @@ setup(
     test_suite='tests',
     # Required packages, pulls from pip if needed; do not use for Conda deployment
     install_requires=['numpy', 'six', 'matplotlib'],
-    url='http://www.my_package.com',  # Website
-    platforms=['Linux (tested on CentOS release 6.10)',
-               'Mac OS-X (tested on Mojave 10.14.6)',
+
+    platforms=['Linux',
+               'Mac OS-X',
                'Unix',
                'Windows'],            # Valid platforms your code works on, adjust to your flavor
     python_requires=">=3.0",          # Python version restrictions

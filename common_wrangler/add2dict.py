@@ -5,8 +5,6 @@
 Allows user to add to a custom dictionary using the command line.
 This script assumes that the format is to have one word per line, and nothing else on the line.
 """
-from __future__ import print_function
-
 import argparse
 import logging
 import sys

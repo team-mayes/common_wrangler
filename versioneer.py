@@ -1,4 +1,3 @@
-
 # Version: 0.18
 
 """The Versioneer - like a rocketeer, but for versions.
@@ -276,11 +275,7 @@ https://creativecommons.org/publicdomain/zero/1.0/ .
 
 """
 
-from __future__ import print_function
-try:
-    import configparser
-except ImportError:
-    import ConfigParser as configparser
+import configparser
 import errno
 import json
 import os
@@ -288,6 +283,8 @@ import re
 import subprocess
 import sys
 
+
+# noinspection PyPep8
 
 class VersioneerConfig:
     """Container for Versioneer configuration parameters."""
@@ -339,17 +336,18 @@ def get_config_from_root(root):
     # configparser.NoOptionError (if it lacks "VCS="). See the docstring at
     # the top of versioneer.py for instructions on writing your setup.cfg .
     setup_cfg = os.path.join(root, "setup.cfg")
-    parser = configparser.SafeConfigParser()
+    parser = configparser.ConfigParser()
     with open(setup_cfg, "r") as f:
-        parser.readfp(f)
-    VCS = parser.get("versioneer", "VCS")  # mandatory
+        parser.read_file(f)
+    vcs = parser.get("versioneer", "VCS")  # mandatory
 
-    def get(parser, name):
-        if parser.has_option("versioneer", name):
-            return parser.get("versioneer", name)
+    def get(config_parser, name):
+        if config_parser.has_option("versioneer", name):
+            return config_parser.get("versioneer", name)
         return None
+
     cfg = VersioneerConfig()
-    cfg.VCS = VCS
+    cfg.VCS = vcs
     cfg.style = get(parser, "style") or ""
     cfg.versionfile_source = get(parser, "versionfile_source")
     cfg.versionfile_build = get(parser, "versionfile_build")
@@ -372,20 +370,22 @@ HANDLERS = {}
 
 def register_vcs_handler(vcs, method):  # decorator
     """Decorator to mark a method as the handler for a particular VCS."""
+
     def decorate(f):
         """Store f in HANDLERS[vcs][method]."""
         if vcs not in HANDLERS:
             HANDLERS[vcs] = {}
         HANDLERS[vcs][method] = f
         return f
+
     return decorate
 
 
 def run_command(commands, args, cwd=None, verbose=False, hide_stderr=False,
                 env=None):
-    """Call the given command(s)."""
+    """ Call the given command(s) """
+    dispcmd = None  # To make IDE happy
     assert isinstance(commands, list)
-    p = None
     for c in commands:
         try:
             dispcmd = str([c] + args)
@@ -992,8 +992,8 @@ def git_versions_from_keywords(keywords, tag_prefix, verbose):
     refs = set([r.strip() for r in refnames.strip("()").split(",")])
     # starting in git-1.8.3, tags are listed as "tag: foo-1.0" instead of
     # just "foo-1.0". If we see a "tag: " prefix, prefer those.
-    TAG = "tag: "
-    tags = set([r[len(TAG):] for r in refs if r.startswith(TAG)])
+    tag = "tag: "
+    tags = set([r[len(tag):] for r in refs if r.startswith(tag)])
     if not tags:
         # Either we're using git < 1.8.3, or there really are no tags. We use
         # a heuristic: assume all version tags have a digit. The old git %d
@@ -1026,19 +1026,19 @@ def git_versions_from_keywords(keywords, tag_prefix, verbose):
 
 
 @register_vcs_handler("git", "pieces_from_vcs")
-def git_pieces_from_vcs(tag_prefix, root, verbose, run_command=run_command):
+def git_pieces_from_vcs(tag_prefix, root, verbose, run_vcs_command=run_command):
     """Get version from 'git describe' in the root of the source tree.
 
     This only gets called if the git-archive 'subst' keywords were *not*
     expanded, and _version.py hasn't already been rewritten with a short
     version string, meaning we're inside a checked out source tree.
     """
-    GITS = ["git"]
+    gits = ["git"]
     if sys.platform == "win32":
-        GITS = ["git.cmd", "git.exe"]
+        gits = ["git.cmd", "git.exe"]
 
-    out, rc = run_command(GITS, ["rev-parse", "--git-dir"], cwd=root,
-                          hide_stderr=True)
+    out, rc = run_vcs_command(gits, ["rev-parse", "--git-dir"], cwd=root,
+                              hide_stderr=True)
     if rc != 0:
         if verbose:
             print("Directory %s not under git control" % root)
@@ -1046,23 +1046,19 @@ def git_pieces_from_vcs(tag_prefix, root, verbose, run_command=run_command):
 
     # if there is a tag matching tag_prefix, this yields TAG-NUM-gHEX[-dirty]
     # if there isn't one, this yields HEX[-dirty] (no NUM)
-    describe_out, rc = run_command(GITS, ["describe", "--tags", "--dirty",
-                                          "--always", "--long",
-                                          "--match", "%s*" % tag_prefix],
-                                   cwd=root)
+    describe_out, rc = run_vcs_command(gits, ["describe", "--tags", "--dirty", "--always", "--long",
+                                              "--match", "%s*" % tag_prefix],
+                                       cwd=root)
     # --long was added in git-1.5.5
     if describe_out is None:
         raise NotThisMethod("'git describe' failed")
     describe_out = describe_out.strip()
-    full_out, rc = run_command(GITS, ["rev-parse", "HEAD"], cwd=root)
+    full_out, rc = run_vcs_command(gits, ["rev-parse", "HEAD"], cwd=root)
     if full_out is None:
         raise NotThisMethod("'git rev-parse' failed")
     full_out = full_out.strip()
 
-    pieces = {}
-    pieces["long"] = full_out
-    pieces["short"] = full_out[:7]  # maybe improved later
-    pieces["error"] = None
+    pieces = {"long": full_out, "short": full_out[:7], "error": None}
 
     # parse describe_out. It will be like TAG-NUM-gHEX[-dirty] or HEX[-dirty]
     # TAG might have hyphens.
@@ -1105,13 +1101,13 @@ def git_pieces_from_vcs(tag_prefix, root, verbose, run_command=run_command):
     else:
         # HEX: no tags
         pieces["closest-tag"] = None
-        count_out, rc = run_command(GITS, ["rev-list", "HEAD", "--count"],
-                                    cwd=root)
+        count_out, rc = run_vcs_command(gits, ["rev-list", "HEAD", "--count"],
+                                        cwd=root)
         pieces["distance"] = int(count_out)  # total number of commits
 
     # commit date: see ISO-8601 comment in git_versions_from_keywords()
-    date = run_command(GITS, ["show", "-s", "--format=%ci", "HEAD"],
-                       cwd=root)[0].strip()
+    date = run_vcs_command(gits, ["show", "-s", "--format=%ci", "HEAD"],
+                           cwd=root)[0].strip()
     pieces["date"] = date.strip().replace(" ", "T", 1).replace(" ", "", 1)
 
     return pieces
@@ -1123,9 +1119,9 @@ def do_vcs_install(manifest_in, versionfile_source, ipy):
     For Git, this means creating/changing .gitattributes to mark _version.py
     for export-subst keyword substitution.
     """
-    GITS = ["git"]
+    gits = ["git"]
     if sys.platform == "win32":
-        GITS = ["git.cmd", "git.exe"]
+        gits = ["git.cmd", "git.exe"]
     files = [manifest_in, versionfile_source]
     if ipy:
         files.append(ipy)
@@ -1152,7 +1148,7 @@ def do_vcs_install(manifest_in, versionfile_source, ipy):
         f.write("%s export-subst\n" % versionfile_source)
         f.close()
         files.append(".gitattributes")
-    run_command(GITS, ["add", "--"] + files)
+    run_command(gits, ["add", "--"] + files)
 
 
 def versions_from_parentdir(parentdir_prefix, root, verbose):
@@ -1205,10 +1201,10 @@ def versions_from_file(filename):
             contents = f.read()
     except EnvironmentError:
         raise NotThisMethod("unable to read _version.py")
-    mo = re.search(r"version_json = '''\n(.*)'''  # END VERSION_JSON",
+    mo = re.search(r"version_json = '''\n(.*)''' {2}# END VERSION_JSON",
                    contents, re.M | re.S)
     if not mo:
-        mo = re.search(r"version_json = '''\r\n(.*)'''  # END VERSION_JSON",
+        mo = re.search(r"version_json = '''\r\n(.*)''' {2}# END VERSION_JSON",
                        contents, re.M | re.S)
     if not mo:
         raise NotThisMethod("no version_json in _version.py")
@@ -1399,6 +1395,7 @@ class VersioneerBadRootError(Exception):
     """The project root directory is unknown or missing key files."""
 
 
+# noinspection PyUnresolvedReferences
 def get_versions(verbose=False):
     """Get the project version from whatever source is available.
 
@@ -1480,6 +1477,7 @@ def get_version():
     return get_versions()["version"]
 
 
+# noinspection PyUnresolvedReferences
 def get_cmdclass():
     """Get the custom setuptools/distutils subclasses used by Versioneer."""
     if "versioneer" in sys.modules:
@@ -1502,7 +1500,7 @@ def get_cmdclass():
     # we add "version" to both distutils and setuptools
     from distutils.core import Command
 
-    class cmd_version(Command):
+    class CmdVersion(Command):
         description = "report generated version string"
         user_options = []
         boolean_options = []
@@ -1521,7 +1519,8 @@ def get_cmdclass():
             print(" date: %s" % vers.get("date"))
             if vers["error"]:
                 print(" error: %s" % vers["error"])
-    cmds["version"] = cmd_version
+
+    cmds["version"] = CmdVersion
 
     # we override "build_py" in both distutils and setuptools
     #
@@ -1544,7 +1543,8 @@ def get_cmdclass():
     else:
         from distutils.command.build_py import build_py as _build_py
 
-    class cmd_build_py(_build_py):
+    # noinspection PyUnresolvedReferences
+    class CmdBuildPy(_build_py):
         def run(self):
             root = get_root()
             cfg = get_config_from_root(root)
@@ -1557,7 +1557,8 @@ def get_cmdclass():
                                                   cfg.versionfile_build)
                 print("UPDATING %s" % target_versionfile)
                 write_to_version_file(target_versionfile, versions)
-    cmds["build_py"] = cmd_build_py
+
+    cmds["build_py"] = CmdBuildPy
 
     if "cx_Freeze" in sys.modules:  # cx_freeze enabled?
         from cx_Freeze.dist import build_exe as _build_exe
@@ -1568,7 +1569,8 @@ def get_cmdclass():
         #   "product_version": versioneer.get_version(),
         #   ...
 
-        class cmd_build_exe(_build_exe):
+        # noinspection PyUnresolvedReferences
+        class CmdBuildExe(_build_exe):
             def run(self):
                 root = get_root()
                 cfg = get_config_from_root(root)
@@ -1580,15 +1582,16 @@ def get_cmdclass():
                 _build_exe.run(self)
                 os.unlink(target_versionfile)
                 with open(cfg.versionfile_source, "w") as f:
-                    LONG = LONG_VERSION_PY[cfg.VCS]
-                    f.write(LONG %
+                    long = LONG_VERSION_PY[cfg.VCS]
+                    f.write(long %
                             {"DOLLAR": "$",
                              "STYLE": cfg.style,
                              "TAG_PREFIX": cfg.tag_prefix,
                              "PARENTDIR_PREFIX": cfg.parentdir_prefix,
                              "VERSIONFILE_SOURCE": cfg.versionfile_source,
                              })
-        cmds["build_exe"] = cmd_build_exe
+
+        cmds["build_exe"] = CmdBuildExe
         del cmds["build_py"]
 
     if 'py2exe' in sys.modules:  # py2exe enabled?
@@ -1597,7 +1600,8 @@ def get_cmdclass():
         except ImportError:
             from py2exe.build_exe import py2exe as _py2exe  # py2
 
-        class cmd_py2exe(_py2exe):
+        # noinspection PyUnresolvedReferences
+        class CmdPy2Exe(_py2exe):
             def run(self):
                 root = get_root()
                 cfg = get_config_from_root(root)
@@ -1609,15 +1613,16 @@ def get_cmdclass():
                 _py2exe.run(self)
                 os.unlink(target_versionfile)
                 with open(cfg.versionfile_source, "w") as f:
-                    LONG = LONG_VERSION_PY[cfg.VCS]
-                    f.write(LONG %
+                    long = LONG_VERSION_PY[cfg.VCS]
+                    f.write(long %
                             {"DOLLAR": "$",
                              "STYLE": cfg.style,
                              "TAG_PREFIX": cfg.tag_prefix,
                              "PARENTDIR_PREFIX": cfg.parentdir_prefix,
                              "VERSIONFILE_SOURCE": cfg.versionfile_source,
                              })
-        cmds["py2exe"] = cmd_py2exe
+
+        cmds["py2exe"] = CmdPy2Exe
 
     # we override different "sdist" commands for both environments
     if "setuptools" in sys.modules:
@@ -1625,7 +1630,8 @@ def get_cmdclass():
     else:
         from distutils.command.sdist import sdist as _sdist
 
-    class cmd_sdist(_sdist):
+    # noinspection PyUnresolvedReferences
+    class CmdSdist(_sdist):
         def run(self):
             versions = get_versions()
             self._versioneer_generated_versions = versions
@@ -1645,7 +1651,8 @@ def get_cmdclass():
             print("UPDATING %s" % target_versionfile)
             write_to_version_file(target_versionfile,
                                   self._versioneer_generated_versions)
-    cmds["sdist"] = cmd_sdist
+
+    cmds["sdist"] = CmdSdist
 
     return cmds
 
@@ -1694,6 +1701,7 @@ del get_versions
 """
 
 
+# noinspection PyUnresolvedReferences
 def do_setup():
     """Main VCS-independent setup function for installing Versioneer."""
     root = get_root()
@@ -1711,8 +1719,8 @@ def do_setup():
 
     print(" creating %s" % cfg.versionfile_source)
     with open(cfg.versionfile_source, "w") as f:
-        LONG = LONG_VERSION_PY[cfg.VCS]
-        f.write(LONG % {"DOLLAR": "$",
+        long = LONG_VERSION_PY[cfg.VCS]
+        f.write(long % {"DOLLAR": "$",
                         "STYLE": cfg.style,
                         "TAG_PREFIX": cfg.tag_prefix,
                         "PARENTDIR_PREFIX": cfg.parentdir_prefix,
@@ -1780,7 +1788,7 @@ def scan_setup_py():
     """Validate the contents of setup.py against Versioneer's expectations."""
     found = set()
     setters = False
-    errors = 0
+    setup_errors = 0
     with open("setup.py", "r") as f:
         for line in f.readlines():
             if "import versioneer" in line:
@@ -1803,14 +1811,14 @@ def scan_setup_py():
         print(" setup( version=versioneer.get_version(),")
         print("        cmdclass=versioneer.get_cmdclass(),  ...)")
         print("")
-        errors += 1
+        setup_errors += 1
     if setters:
         print("You should remove lines like 'versioneer.VCS = ' and")
         print("'versioneer.versionfile_source = ' . This configuration")
         print("now lives in setup.cfg, and should be removed from setup.py")
         print("")
-        errors += 1
-    return errors
+        setup_errors += 1
+    return setup_errors
 
 
 if __name__ == "__main__":

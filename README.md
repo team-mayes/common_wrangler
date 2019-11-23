@@ -4,11 +4,8 @@ common_wrangler
 [![PyPI version](https://badge.fury.io/py/common-wrangler.svg)](https://badge.fury.io/py/common-wrangler)
 [![codecov](https://codecov.io/gh/team-mayes/common_wrangler/branch/master/graph/badge.svg)](https://codecov.io/gh/team-mayes/common_wrangler)
 
-Scripts for file and data manipulation, as well as common scripts used in this project as well as gaussian_wrangler, ligninkmc, and md_wrangler
-
-### Copyright
-
-Copyright (c) 2019, hmayes
+Scripts for file and data manipulation, as well as common scripts used in this project as well as 
+gaussian_wrangler, ligninkmc, and md_wrangler.
 
 This package contains a common.py that is used in other packages from this developer, such as:
 https://github.com/team-mayes/gaussian_wrangler
@@ -20,6 +17,13 @@ corresponding template file that has parameter names in brackets. For example, t
 have `project_name = common_wrangler` and the template would have `{project_name}` as a field to fill in.
 
 *rename_files*: meant to be used in any terminal to rename any type of file.
+
+Tested on CentOS release 6.10 and (tested on Mojave 10.14.6)
+
+### Copyright
+
+Copyright (c) 2019, hmayes
+
 
 #### Acknowledgements
  

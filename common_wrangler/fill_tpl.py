@@ -7,19 +7,13 @@ Fills in a template evb/rmd parameter files
 import argparse
 import os
 import sys
-from collections import OrderedDict
+import collections
 import itertools
-
+from configparser import ConfigParser, MissingSectionHeaderError
 from common_wrangler.common import (InvalidDataError, GOOD_RET, INPUT_ERROR, warning, IO_ERROR, process_cfg, read_tpl,
                                     create_out_fname, str_to_file, TemplateNotReadableError,
                                     MISSING_SEC_HEADER_ERR_MSG, conv_num, OUT_DIR)
 
-try:
-    # noinspection PyCompatibility
-    from ConfigParser import ConfigParser, MissingSectionHeaderError
-except ImportError:
-    # noinspection PyCompatibility
-    from configparser import ConfigParser, MissingSectionHeaderError
 
 # Constants #
 TPL_FNAME = 'tpl_file'
@@ -51,7 +45,7 @@ REQ_KEYS = {}
 def process_tpl_vals(raw_key_val_tuple_list):
     """
     """
-    val_dict = OrderedDict()
+    val_dict = collections.OrderedDict()
     for key, val in raw_key_val_tuple_list:
         val_dict[key] = [conv_num(x.strip()) for x in val.split(',')]
     return val_dict
@@ -75,7 +69,7 @@ def read_cfg(f_loc, cfg_proc=process_cfg):
         raise IOError('Could not read file {}'.format(f_loc))
 
     # Start with empty template value dictionaries to be filled
-    proc = {TPL_VALS: OrderedDict(), TPL_EQ_PARAMS: OrderedDict()}
+    proc = {TPL_VALS: collections.OrderedDict(), TPL_EQ_PARAMS: collections.OrderedDict()}
 
     if MAIN_SEC not in config.sections():
         raise InvalidDataError("The configuration file is missing the required '{}' section".format(MAIN_SEC))

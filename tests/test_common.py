@@ -16,7 +16,8 @@ from common_wrangler.common import (find_files_by_dir, read_csv, get_fname_root,
                                     make_dir, NotFoundError, silent_remove, list_to_file, longest_common_substring,
                                     capture_stdout, print_csv_stdout, read_tpl, TemplateNotReadableError,
                                     file_rows_to_list, round_to_12th_decimal, single_quote, calc_dist,
-                                    np_float_array_from_file, capture_stderr, round_sig_figs, process_cfg, MAIN_SEC)
+                                    np_float_array_from_file, capture_stderr, round_sig_figs, process_cfg, MAIN_SEC,
+                                    parse_stoich)
 import logging
 
 try:
@@ -88,6 +89,7 @@ DIFF_LINES_MISS_VAL = os.path.join(SUB_DATA_DIR, 'diff_lines_miss_val.csv')
 MISS_LINES_MISS_LINE = os.path.join(SUB_DATA_DIR, 'diff_lines_miss_line.csv')
 DIFF_LINES_ONE_NAN = os.path.join(SUB_DATA_DIR, 'diff_lines_one_nan.csv')
 DIFF_LINES_ONE_NAN_PREC_DIFF = os.path.join(SUB_DATA_DIR, 'diff_lines_one_nan.csv')
+DIFF_LINES_STR_DIFF = os.path.join(SUB_DATA_DIR, 'diff_lines_str_diff.csv')
 
 DIFF_LINES_SCI_FILE = os.path.join(SUB_DATA_DIR, 'cv_analysis_quat.log')
 DIFF_LINES_ALT_SCI_FILE = os.path.join(SUB_DATA_DIR, 'cv_analysis_quat_good.log')
@@ -617,6 +619,12 @@ class TestDiffLines(unittest.TestCase):
     def testSciVectorsPrecDiff(self):
         self.assertFalse(diff_lines(DIFF_LINES_SCI_FILE, DIFF_LINES_ALT_SCI_FILE))
 
+    def testStrDiff(self):
+        diff = diff_lines(DIFF_LINES_BASE_FILE, DIFF_LINES_STR_DIFF)
+        good_diff = ['- 540000 1.0261450032524644 2.23941837370778 1.2132733704553156 1.491028573368929',
+                     '+ 540000 1.0261450032524644 2.23941837370778 1.2132733704553156 ghost']
+        self.assertEqual(diff, good_diff)
+
 
 class TestQuoteDeQuote(unittest.TestCase):
     def testQuoting(self):
@@ -728,7 +736,6 @@ class TestLongestCommonSubstring(unittest.TestCase):
 
 class TestReadConfig(unittest.TestCase):
     # Filling it what not covered by fill_tpl
-    # TODO: add more cfg tests
     def testExtraKey(self):
         config = ConfigParser()
         config.read(ONE_KEY_INI)
@@ -761,3 +768,25 @@ class TestReadConfig(unittest.TestCase):
         except InvalidDataError as e:
             message = e.args[0]
         self.assertTrue("Problem with config vals on key 'ghost'" in message)
+
+
+class TestChemistry(unittest.TestCase):
+    def testStoichCalc1(self):
+        stoich1 = 'C6H6'
+        good_stoich_dict = {'C': 6, 'H': 6}
+        stoich_dict = parse_stoich(stoich1)
+        self.assertEqual(stoich_dict, good_stoich_dict)
+
+    def testStoichAddToDict(self):
+        ini_stoich_dict = {'C': 6, 'H': 6}
+        add_stoich = 'O'
+        new_stoich_dict = parse_stoich(add_stoich, add_to_dict=ini_stoich_dict)
+        good_stoich_dict = {'O': 1, 'C': 6, 'H': 6}
+        self.assertEqual(new_stoich_dict, good_stoich_dict)
+
+    def testStoichAddToDict2(self):
+        ini_stoich_dict = {'C': 6, 'H': 6}
+        add_stoich = 'CH2'
+        new_stoich_dict = parse_stoich(add_stoich, add_to_dict=ini_stoich_dict)
+        good_stoich_dict = {'C': 7, 'H': 8}
+        self.assertEqual(new_stoich_dict, good_stoich_dict)

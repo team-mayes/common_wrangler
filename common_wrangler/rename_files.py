@@ -4,15 +4,11 @@
 """
 Renames files which have spaces in their names
 """
-from __future__ import print_function
-
 import argparse
 import logging
 import os
 import sys
-
 import re
-
 from common_wrangler.common import (GOOD_RET, INPUT_ERROR, warning)
 
 __author__ = 'hmayes'

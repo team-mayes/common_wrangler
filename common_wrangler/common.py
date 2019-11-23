@@ -4,27 +4,25 @@
 Common methods for this project and others in the "wrangler" series
 """
 
-from __future__ import print_function, division
-
 import argparse
-import collections
 import csv
 import difflib
 import glob
-from datetime import datetime
 import re
 import shutil
 import errno
 import fnmatch
-from itertools import chain, islice
 import math
 import numpy as np
 import os
-from shutil import copy2, Error, copystat
 import six
 import sys
-from contextlib import contextmanager
 import matplotlib.pyplot as plt
+from datetime import datetime
+from collections.abc import Iterable
+from itertools import chain, islice
+from shutil import copy2, Error, copystat
+from contextlib import contextmanager
 from matplotlib.ticker import AutoMinorLocator
 from matplotlib.patches import Rectangle
 
@@ -1026,7 +1024,7 @@ def list_to_file(list_to_print, fname, list_format=None, delimiter=' ', mode='w'
             # need to test for string first, because strings are iterable
             if isinstance(line, six.string_types):
                 w_file.write(line + '\n')
-            elif isinstance(line, collections.Iterable):
+            elif isinstance(line, Iterable):
                 if list_format is None:
                     w_file.write(delimiter.join(map(str, line)) + "\n")
                 else:
@@ -1567,3 +1565,22 @@ def make_fig(name, x_array, y1_array, y1_label="", ls1="-", color1="blue",
     # ax.yaxis.grid(True, 'minor')
     # ax.yaxis.grid(True, 'major', linewidth=1)
     save_figure(name)
+
+
+# specifically for chemistry
+
+def parse_stoich(stoich_string, add_to_dict=None):
+    raw_list = re.findall(r'([A-Z][a-z]*)(\d*)', stoich_string)
+    stoich_dict = {}
+    for atom_tuple in raw_list:
+        if atom_tuple[1] == '':
+            stoich_dict[atom_tuple[0]] = 1
+        else:
+            stoich_dict[atom_tuple[0]] = int(atom_tuple[1])
+    if add_to_dict:
+        for key, val in add_to_dict.items():
+            if key in stoich_dict:
+                stoich_dict[key] += add_to_dict[key]
+            else:
+                stoich_dict[key] = add_to_dict[key]
+    return stoich_dict
