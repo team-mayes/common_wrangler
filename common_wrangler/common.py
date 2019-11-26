@@ -7,9 +7,9 @@ Common methods for this project and others in the "wrangler" series
 import argparse
 import csv
 import difflib
-import glob
+# import glob
 import re
-import shutil
+# import shutil
 import errno
 import fnmatch
 import math
@@ -18,9 +18,9 @@ import os
 import six
 import sys
 import matplotlib.pyplot as plt
-from datetime import datetime
+# from datetime import datetime
 from collections.abc import Iterable
-from itertools import chain, islice
+# from itertools import chain, islice
 from shutil import copy2, Error, copystat
 from contextlib import contextmanager
 from matplotlib.ticker import AutoMinorLocator
@@ -193,15 +193,15 @@ def capture_stderr(command, *args, **kwargs):
 # Calculations #
 
 
-def calc_kbt(temp_k):
-    """
-    Returns the given temperature in Kelvin multiplied by Boltzmann's Constant.
-
-    @param temp_k: A temperature in Kelvin.
-    @return: The given temperature in Kelvin multiplied by Boltzmann's Constant.
-    """
-    return BOLTZ_CONST * temp_k
-
+# def calc_kbt(temp_k):
+#     """
+#     Returns the given temperature in Kelvin multiplied by Boltzmann's Constant.
+#
+#     @param temp_k: A temperature in Kelvin.
+#     @return: The given temperature in Kelvin multiplied by Boltzmann's Constant.
+#     """
+#     return BOLTZ_CONST * temp_k
+#
 
 def calc_k(temp, delta_gibbs):
     """
@@ -217,12 +217,12 @@ def calc_dist(a, b):
     return np.linalg.norm(np.subtract(a, b))
 
 
-# TODO: add test?
-#   maybe move to md_common: pbc_dist, first_pbc_image
-def pbc_dist(a, b, box):
-    # TODO: make a test that ensures the distance calculated is <= sqrt(sqrt((a/2)^2+(b/2)^2) + (c/2)^2)) ?
-    return np.linalg.norm(pbc_calc_vector(a, b, box))
-
+# # TODO: add test?
+# #   maybe move to md_common: pbc_dist, first_pbc_image
+# def pbc_dist(a, b, box):
+#     # TODO: make a test that ensures the distance calculated is <= sqrt(sqrt((a/2)^2+(b/2)^2) + (c/2)^2)) ?
+#     return np.linalg.norm(pbc_calc_vector(a, b, box))
+#
 
 def pbc_calc_vector(a, b, box):
     """
@@ -236,14 +236,14 @@ def pbc_calc_vector(a, b, box):
     return vec - np.multiply(box, np.asarray(list(map(round, vec / box))))
 
 
-def first_pbc_image(xyz_coords, box):
-    """
-    Moves xyz coords to the first PBC image, centered at the origin
-    @param xyz_coords: coordinates to center (move to first image)
-    @param box: PBC box dimensions
-    @return: xyz coords (np array) moved to the first image
-    """
-    return pbc_calc_vector(xyz_coords, XYZ_ORIGIN, box)
+# def first_pbc_image(xyz_coords, box):
+#     """
+#     Moves xyz coords to the first PBC image, centered at the origin
+#     @param xyz_coords: coordinates to center (move to first image)
+#     @param box: PBC box dimensions
+#     @return: xyz coords (np array) moved to the first image
+#     """
+#     return pbc_calc_vector(xyz_coords, XYZ_ORIGIN, box)
 
 
 def pbc_vector_avg(a, b, box):
@@ -309,20 +309,20 @@ def vec_dihedral(vec_ba, vec_bc, vec_cd):
 
 # Other #
 
-# TODO: find if ever used, and if so, test
-def chunk(seq, chunk_size, process=iter):
-    """Yields items from an iterator in iterable chunks.
-    From https://gist.github.com/ksamuel/1275417
-
-    @param seq: The sequence to chunk.
-    @param chunk_size: The size of the returned chunks.
-    @param process: The function to use for creating the iterator.  Useful for iterating over different
-    data structures.
-    @return: Chunks of the given size from the given sequence.
-    """
-    it = iter(seq)
-    while True:
-        yield process(chain([six.next(it)], islice(it, chunk_size - 1)))
+# # TODO: find if ever used, and if so, test
+# def chunk(seq, chunk_size, process=iter):
+#     """Yields items from an iterator in iterable chunks.
+#     From https://gist.github.com/ksamuel/1275417
+#
+#     @param seq: The sequence to chunk.
+#     @param chunk_size: The size of the returned chunks.
+#     @param process: The function to use for creating the iterator.  Useful for iterating over different
+#     data structures.
+#     @return: Chunks of the given size from the given sequence.
+#     """
+#     it = iter(seq)
+#     while True:
+#         yield process(chain([six.next(it)], islice(it, chunk_size - 1)))
 
 
 # I/O #
@@ -517,21 +517,21 @@ def read_csv_to_list(data_file, delimiter=',', header=False):
     return csv_list[first_line:], header_row
 
 
-def create_backup_filename(orig):
-    base, ext = os.path.splitext(orig)
-    now = datetime.now()
-    return "".join((base, now.strftime(BACKUP_TS_FMT), ext))
-
-
-def find_backup_filenames(orig):
-    base, ext = os.path.splitext(orig)
-    found = glob.glob(base + "*" + ext)
-    try:
-        found.remove(orig)
-    except ValueError:
-        # Original not present; ignore.
-        pass
-    return found
+# def create_backup_filename(orig):
+#     base, ext = os.path.splitext(orig)
+#     now = datetime.now()
+#     return "".join((base, now.strftime(BACKUP_TS_FMT), ext))
+#
+#
+# def find_backup_filenames(orig):
+#     base, ext = os.path.splitext(orig)
+#     found = glob.glob(base + "*" + ext)
+#     try:
+#         found.remove(orig)
+#     except ValueError:
+#         # Original not present; ignore.
+#         pass
+#     return found
 
 
 def silent_remove(filename, disable=False):
@@ -567,15 +567,15 @@ def allow_write(f_loc, overwrite=False):
     return True
 
 
-def move_existing_file(f_loc):
-    """
-    Renames an existing file using a timestamp based on the move time.
-
-    @param f_loc: The location to check.
-    """
-    if os.path.exists(f_loc):
-        shutil.move(f_loc, create_backup_filename(f_loc))
-
+# def move_existing_file(f_loc):
+#     """
+#     Renames an existing file using a timestamp based on the move time.
+#
+#     @param f_loc: The location to check.
+#     """
+#     if os.path.exists(f_loc):
+#         shutil.move(f_loc, create_backup_filename(f_loc))
+#
 
 def get_fname_root(src_file):
     """

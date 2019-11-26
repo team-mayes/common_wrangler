@@ -48,16 +48,17 @@ def parse_cmdline(argv):
     parser.add_argument("-l", "--lowercase", help="Flag to specify that files should be renamed to be all in "
                                                   "lowercase.",
                         action='store_true')
+    parser.add_argument('-n', "--new_pattern", help="The new pattern to use in changing the file name "
+                                                    "(defaults to '{}')".format(DEF_NEW_FILE_PAT),
+                        default=DEF_NEW_FILE_PAT)
     parser.add_argument("-o", "--only_dir", help="Flag to specify that only the directory specified with '-d' "
                                                  "(which defaults to current directory) is to be searched.",
                         action='store_true')
     parser.add_argument('-p', "--pattern", help="The file pattern to search for "
                                                 "(defaults to '{}')".format(DEF_FILE_PAT),
                         default=DEF_FILE_PAT)
-
-    parser.add_argument('-n', "--new_pattern", help="The new pattern to use in changing the file name "
-                                                    "(defaults to '{}')".format(DEF_NEW_FILE_PAT),
-                        default=DEF_NEW_FILE_PAT)
+    parser.add_argument("-t", "--test_mode", help="Flag to list files that would be renamed, without renaming them.",
+                        action='store_true')
 
     args = None
     try:
@@ -72,20 +73,25 @@ def parse_cmdline(argv):
     return args, GOOD_RET
 
 
-def rename_file(tgt_dir, fname, pattern, new_pattern, make_lowercase):
+def rename_file(tgt_dir, fname, pattern, new_pattern, make_lowercase, test_flag):
     old_name = os.path.abspath(os.path.join(tgt_dir, fname))
     if make_lowercase:
         new_base = fname.lower()
     else:
         new_base = fname.replace(pattern, new_pattern)
     new_name = os.path.abspath(os.path.join(tgt_dir, new_base))
-    os.rename(old_name, new_name)
+
     rel_old_name = os.path.relpath(old_name)
     rel_new_name = os.path.relpath(new_name)
-    print("Renamed {} --> {}".format(rel_old_name, rel_new_name))
+
+    if test_flag:
+        print("Would rename {} --> {}".format(rel_old_name, rel_new_name))
+    else:
+        os.rename(old_name, new_name)
+        print("Renamed {} --> {}".format(rel_old_name, rel_new_name))
 
 
-def rename_files_by_dir(tgt_dir, pattern, new_pattern, no_subdir, make_lowercase):
+def rename_files_by_dir(tgt_dir, pattern, new_pattern, no_subdir, make_lowercase, test_flag):
     """
     Alternate filename matching
     :param tgt_dir: base file in which to search
@@ -93,6 +99,7 @@ def rename_files_by_dir(tgt_dir, pattern, new_pattern, no_subdir, make_lowercase
     :param new_pattern: string to replace the pattern string
     :param no_subdir: boolean to indicate if only the current directory should be searched
     :param make_lowercase: boolean to indicate if file names should be converted to lowercase
+    :param test_flag: boolean to indicate if files to rename should be listed without renaming
     :return: an integer representing the number of files renamed
     """
     num_files_renamed = 0
@@ -104,13 +111,13 @@ def rename_files_by_dir(tgt_dir, pattern, new_pattern, no_subdir, make_lowercase
         file_list = os.listdir(tgt_dir)
         for fname in file_list:
             if pat_match.match(fname):
-                rename_file(tgt_dir, fname, pattern, new_pattern, make_lowercase)
+                rename_file(tgt_dir, fname, pattern, new_pattern, make_lowercase, test_flag)
                 num_files_renamed += 1
     else:
         for root, dirs, files in os.walk(tgt_dir):
             for fname in files:
                 if pat_match.match(fname):
-                    rename_file(root, fname, pattern, new_pattern, make_lowercase)
+                    rename_file(root, fname, pattern, new_pattern, make_lowercase, test_flag)
                     num_files_renamed += 1
     return num_files_renamed
 
@@ -126,8 +133,12 @@ def main(argv=None):
         return ret
 
     num_renamed_files = rename_files_by_dir(args.base_dir, args.pattern, args.new_pattern, args.only_dir,
-                                            args.lowercase)
-    print("Found and renamed {} files".format(num_renamed_files))
+                                            args.lowercase, args.test_mode)
+    if args.test_mode:
+        print("Ran rename_files in testing mode; no files have been renamed\n"
+              "If not in testing mode, would rename {} files".format(num_renamed_files))
+    else:
+        print("Found and renamed {} files".format(num_renamed_files))
     return GOOD_RET  # success
 
 

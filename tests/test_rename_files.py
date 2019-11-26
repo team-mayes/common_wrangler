@@ -213,3 +213,21 @@ class TestRename(unittest.TestCase):
         finally:
             for f_or_dir_name in list_to_clean:
                 silent_remove(f_or_dir_name, DISABLE_REMOVE)
+
+    def testMakeLowercaseTestingMode(self):
+        list_to_clean = get_rename_files_test_list_to_clean()
+        initial_fnames = clean_then_make_files(list_to_clean, TEST_FNAMES + MORE_FNAMES, [SUB_DATA_DIR])
+        expected_fnames = initial_fnames
+        test_input = ["-d", SUB_DATA_DIR, "-l", "-t"]
+        try:
+            if logger.isEnabledFor(logging.DEBUG):
+                main(test_input)
+                # need to make again for capturing std out
+                clean_then_make_files(list_to_clean, TEST_FNAMES, [SUB_DATA_DIR])
+            with capture_stdout(main, test_input) as output:
+                self.assertTrue("would rename 3 files" in output)
+            self.assertTrue(count_files(initial_fnames), 6)
+            self.assertTrue(count_files(expected_fnames), 6)
+        finally:
+            for f_or_dir_name in list_to_clean:
+                silent_remove(f_or_dir_name, DISABLE_REMOVE)
