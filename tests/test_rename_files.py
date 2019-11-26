@@ -28,10 +28,13 @@ SMALL_FILE = os.path.join(SUB_DATA_DIR, 'small_file.txt')
 
 
 # test data #
-TEST_FNAMES = ['has space.txt', 'has two spaces.txt', 'now!exclaim.txt']
-REPLACED_FNAMES1 = ['hasspace.txt', 'hastwospaces.txt', 'now!exclaim.txt']
-REPLACED_FNAMES2 = ['has space.txt', 'has two spaces.txt', 'now_exclaim.txt']
-CLEAN_UP_FNAMES = set(TEST_FNAMES + REPLACED_FNAMES1 + REPLACED_FNAMES2)
+TEST_FNAMES = ['has space.txt', 'has two spaces.txt', 'now!exclaim.txt', 'WOW.csv']
+MORE_FNAMES = ['wow_wow.CSV', 'WOW-WOW-WOW.CSV']
+REPLACED_FNAMES1 = ['hasspace.txt', 'hastwospaces.txt', 'now!exclaim.txt', 'WOW.csv']
+REPLACED_FNAMES2 = ['has space.txt', 'has two spaces.txt', 'now_exclaim.txt', 'WOW.csv']
+REPLACED_FNAMES3 = ['has space.txt', 'has two spaces.txt', 'now!exclaim.txt', 'wow.csv', 'wow_wow.csv',
+                    'wow-wow-wow.csv']
+CLEAN_UP_FNAMES = set(TEST_FNAMES + REPLACED_FNAMES1 + REPLACED_FNAMES2 + REPLACED_FNAMES3)
 # REPLACED_FILE_NAMES3 = ['has_space.txt', 'has_two_spaces.txt', 'now!exclaim.txt']
 
 
@@ -148,8 +151,8 @@ class TestRename(unittest.TestCase):
             # main(test_input)
             with capture_stdout(main, test_input) as output:
                 self.assertTrue("Found and renamed 4 files" in output)
-            self.assertTrue(count_files(initial_fnames) == 2)
-            self.assertTrue(count_files(expected_fnames) == 6)
+            self.assertTrue(count_files(initial_fnames) == 4)
+            self.assertTrue(count_files(expected_fnames) == 8)
         finally:
             for f_or_dir_name in list_to_clean:
                 silent_remove(f_or_dir_name, DISABLE_REMOVE)
@@ -168,8 +171,8 @@ class TestRename(unittest.TestCase):
                 clean_then_make_files(list_to_clean, TEST_FNAMES, [SUB_DATA_DIR, SUB_SUB_DIR])
             with capture_stdout(main, test_input) as output:
                 self.assertTrue("Found and renamed 2 files" in output)
-            self.assertTrue(count_files(initial_fnames) == 4)
-            self.assertTrue(count_files(expected_fnames) == 6)
+            self.assertTrue(count_files(initial_fnames) == 6)
+            self.assertTrue(count_files(expected_fnames) == 8)
         finally:
             for f_or_dir_name in list_to_clean:
                 silent_remove(f_or_dir_name, DISABLE_REMOVE)
@@ -187,8 +190,26 @@ class TestRename(unittest.TestCase):
                 clean_then_make_files(list_to_clean, TEST_FNAMES, [SUB_DATA_DIR])
             with capture_stdout(main, test_input) as output:
                 self.assertTrue("Found and renamed 1 files" in output)
-            self.assertTrue(count_files(initial_fnames), 1)
-            self.assertTrue(count_files(expected_fnames), 3)
+            self.assertTrue(count_files(initial_fnames), 3)
+            self.assertTrue(count_files(expected_fnames), 4)
+        finally:
+            for f_or_dir_name in list_to_clean:
+                silent_remove(f_or_dir_name, DISABLE_REMOVE)
+
+    def testMakeLowerCase(self):
+        list_to_clean = get_rename_files_test_list_to_clean()
+        initial_fnames = clean_then_make_files(list_to_clean, TEST_FNAMES + MORE_FNAMES, [SUB_DATA_DIR])
+        expected_fnames = get_abs_path(REPLACED_FNAMES3, SUB_DATA_DIR)
+        test_input = ["-d", SUB_DATA_DIR, "-l"]
+        try:
+            if logger.isEnabledFor(logging.DEBUG):
+                main(test_input)
+                # need to make again for capturing std out
+                clean_then_make_files(list_to_clean, TEST_FNAMES, [SUB_DATA_DIR])
+            with capture_stdout(main, test_input) as output:
+                self.assertTrue("Found and renamed 3 files" in output)
+            self.assertTrue(count_files(initial_fnames), 6)
+            self.assertTrue(count_files(expected_fnames), 6)
         finally:
             for f_or_dir_name in list_to_clean:
                 silent_remove(f_or_dir_name, DISABLE_REMOVE)

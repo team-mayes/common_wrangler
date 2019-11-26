@@ -118,3 +118,6 @@ ENV/
 temp*
 /tests/test_data/rename_files/has space.txt
 /tests/test_data/rename_files/has two spaces.txt
+/tests/test_data/rename_files/WOW.csv
+/tests/test_data/rename_files/WOW-WOW-WOW.CSV
+/tests/test_data/rename_files/wow_wow.CSV
