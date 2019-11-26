@@ -80,6 +80,9 @@ def rename_file(tgt_dir, fname, pattern, new_pattern, make_lowercase):
         new_base = fname.replace(pattern, new_pattern)
     new_name = os.path.abspath(os.path.join(tgt_dir, new_base))
     os.rename(old_name, new_name)
+    rel_old_name = os.path.relpath(old_name)
+    rel_new_name = os.path.relpath(new_name)
+    print("Renamed {} --> {}".format(rel_old_name, rel_new_name))
 
 
 def rename_files_by_dir(tgt_dir, pattern, new_pattern, no_subdir, make_lowercase):
