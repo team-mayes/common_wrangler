@@ -58,7 +58,7 @@ EXTRA_SEC_INI = os.path.join(SUB_DATA_DIR, 'extra_section.ini')
 
 
 class TestMakeParFailWell(unittest.TestCase):
-    # These tests only check for (hopefully) helpful messages
+    # These tests only check for (ideally) helpful messages
     def testHelp(self):
         test_input = ['-h']
         if logger.isEnabledFor(logging.DEBUG):

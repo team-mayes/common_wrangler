@@ -745,15 +745,19 @@ def copytree(src, dst, symlinks=False, ignore=None):
 
 # CSV #
 
-def read_csv_header(src_file):
-    """Returns a list containing the values from the first row of the given CSV
+def read_csv_header(src_file, return_second_row=False):
+    """Returns a list containing the values from the first row (or second row) of the given CSV
     file or None if the file is empty.
 
-    @param src_file: The CSV file to read.
-    @return: The first row or None if empty.
+    :param src_file: The CSV file to read.
+    :param return_second_row: boolean to return 2nd row instead
+    :return: The first row or None if empty.
     """
     with open(src_file) as csv_file:
         for row in csv.reader(csv_file):
+            if return_second_row:
+                return_second_row = False
+                continue
             return list(row)
 
 

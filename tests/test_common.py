@@ -276,9 +276,13 @@ class TestMakeDir(unittest.TestCase):
 
 
 class TestReadFirstRow(unittest.TestCase):
-
     def testFirstRow(self):
         self.assertListEqual(CSV_HEADER, read_csv_header(CSV_FILE))
+
+    def testSecondRow(self):
+        good_second_row = ["1.0", "inf", "inf"]
+        second_row = read_csv_header(CSV_FILE, return_second_row=True)
+        self.assertEqual(second_row, good_second_row)
 
     def testEmptyFile(self):
         self.assertIsNone(read_csv_header(EMPTY_CSV))
