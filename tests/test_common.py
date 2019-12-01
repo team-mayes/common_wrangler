@@ -264,7 +264,8 @@ class TestCheckFileFileList(unittest.TestCase):
     def testSearchCurrentDir(self):
         # this test assumes only only license file
         found_list = check_for_files(None, None, search_pattern="LICENSE")
-        self.assertEqual(found_list, ['LICENSE'])
+        self.assertEqual(len(found_list), 1)
+        self.assertEqual(os.path.relpath(found_list[0]), 'LICENSE')
 
     def testInvalidSearchDir(self):
         try:
