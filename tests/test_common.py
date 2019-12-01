@@ -12,7 +12,7 @@ import unittest
 from common_wrangler.common import (find_files_by_dir, read_csv, get_fname_root, write_csv, str_to_bool,
                                     read_csv_header, fmt_row_data, calc_k, diff_lines, create_out_fname, dequote,
                                     quote, conv_raw_val, pbc_calc_vector, pbc_vector_avg, read_csv_dict,
-                                    InvalidDataError, unit_vector, vec_angle, vec_dihedral, check_file_and_file_list,
+                                    InvalidDataError, unit_vector, vec_angle, vec_dihedral, check_for_files,
                                     make_dir, NotFoundError, silent_remove, list_to_file, longest_common_substring,
                                     capture_stdout, print_csv_stdout, read_tpl, TemplateNotReadableError,
                                     file_rows_to_list, round_to_12th_decimal, single_quote, calc_dist,
@@ -59,10 +59,14 @@ EMPTY_CSV = os.path.join(SUB_DATA_DIR, 'empty.csv')
 FILE_LIST = os.path.join(SUB_DATA_DIR, 'file_list.txt')
 FILE_LIST_W_MISSING_FILE = os.path.join(SUB_DATA_DIR, 'file_list_with_ghost.txt')
 
+TEST_DIR_SEARCH_FILE = os.path.join(NEW_DIR, 'business_file.csv')
+TEST_DIR_SEARCH_FILE2 = os.path.join(NEW_DIR, 'business_file.unique')
+
 BOX_SIZES_NO_HEADER_SPACE_SEP = os.path.join(SUB_DATA_DIR, 'qm_box_sizes.txt')
 BOX_SIZES_HEADER_SPACE_SEP = os.path.join(SUB_DATA_DIR, 'qm_box_sizes_header.txt')
 BOX_SIZES_NO_HEADER_COMMA_SEP = os.path.join(SUB_DATA_DIR, 'qm_box_sizes.csv')
 BOX_SIZES_HEADER_COMMA_SEP = os.path.join(SUB_DATA_DIR, 'qm_box_sizes_header.csv')
+
 GOOD_BOX_NDARRAY = np.asarray([[11.89100027, 15.36799955, 18.10500002], [11.375, 14.99599981, 17.98800039],
                                [11.10300016, 15.60500002, 18.31400013], [10., 14.995, 10.98800039]])
 GOOD_BOX_NDARRAY_ROW_NAN = np.asarray([[np.nan, np.nan, np.nan],
@@ -228,34 +232,95 @@ class TestCheckFileFileList(unittest.TestCase):
     """
     def test_NoneOnly(self):
         try:
-            found_list = check_file_and_file_list(None, None)
+            found_list = check_for_files(None, None)
             self.assertFalse(found_list)
         except InvalidDataError as e:
             self.assertTrue("No files to process" in e.args[0])
 
     def test_NoSuchFile(self):
         try:
-            found_list = check_file_and_file_list("ghost.com", None)
+            found_list = check_for_files("ghost.com", None)
             self.assertFalse(found_list)
         except IOError as e:
             self.assertTrue("ghost.com" in e.args[0])
 
     def test_name_only(self):
-        found_list = check_file_and_file_list(ELEM_DICT_FILE, None)
+        found_list = check_for_files(ELEM_DICT_FILE, None)
         self.assertTrue(len(found_list) == 1)
         self.assertTrue(ELEM_DICT_FILE == found_list[0])
 
     def testList(self):
-        found_list = check_file_and_file_list(None, FILE_LIST)
+        found_list = check_for_files(None, FILE_LIST)
         self.assertTrue(len(found_list) == 4)
 
     def testListWithMissingFile(self):
-        # found_list = check_file_and_file_list(None, FILE_LIST_W_MISSING_FILE)
+        # found_list = check_for_files(None, FILE_LIST_W_MISSING_FILE)
         try:
-            found_list = check_file_and_file_list(None, FILE_LIST_W_MISSING_FILE)
+            found_list = check_for_files(None, FILE_LIST_W_MISSING_FILE)
             self.assertFalse(found_list)
         except IOError as e:
             self.assertTrue("ghost.csv" in e.args[0])
+
+    def testSearchCurrentDir(self):
+        # this test assumes only only license file
+        found_list = check_for_files(None, None, search_pattern="LICENSE")
+        self.assertEqual(found_list, ['LICENSE'])
+
+    def testInvalidSearchDir(self):
+        try:
+            found_list = check_for_files(None, None, search_pattern="py", search_dir="ghost")
+            self.assertFalse(found_list)
+        except InvalidDataError as e:
+            self.assertTrue("Could not find" in e.args[0])
+
+    def testSearchSubDir(self):
+        try:
+            silent_remove(NEW_DIR, dir_with_files=True)
+            make_dir(NEW_DIR)
+            created_files = [TEST_DIR_SEARCH_FILE, TEST_DIR_SEARCH_FILE2]
+            for fname in created_files:
+                with open(fname, 'w') as f:
+                    f.write("file is opened for business")
+            found_list = check_for_files(None, None, search_pattern="unique", search_dir=SUB_DATA_DIR,
+                                         search_sub_dir=True)
+            self.assertEqual(found_list, [TEST_DIR_SEARCH_FILE2])
+        finally:
+            silent_remove(NEW_DIR, disable=DISABLE_REMOVE, dir_with_files=True)
+
+    def testSearchSubDirAltPat(self):
+        try:
+            silent_remove(NEW_DIR, dir_with_files=True)
+            make_dir(NEW_DIR)
+            created_files = [TEST_DIR_SEARCH_FILE, TEST_DIR_SEARCH_FILE2]
+            for fname in created_files:
+                with open(fname, 'w') as f:
+                    f.write("file is opened for business")
+            found_list = check_for_files(None, None, search_pattern="*unique", search_dir=SUB_DATA_DIR,
+                                         search_sub_dir=True)
+            self.assertEqual(found_list, [TEST_DIR_SEARCH_FILE2])
+        finally:
+            silent_remove(NEW_DIR, disable=DISABLE_REMOVE, dir_with_files=True)
+
+    def testSearchButDoNotFindDir(self):
+        try:
+            silent_remove(NEW_DIR, dir_with_files=True)
+            found_list = check_for_files(None, None, search_pattern="unique", search_dir=SUB_DATA_DIR)
+            self.assertFalse(found_list)
+        except InvalidDataError as e:
+            self.assertTrue("No files to process" in e.args[0])
+        finally:
+            silent_remove(NEW_DIR, disable=DISABLE_REMOVE, dir_with_files=True)
+
+    def testSearchButDoNotFindSubDir(self):
+        try:
+            silent_remove(NEW_DIR, dir_with_files=True)
+            found_list = check_for_files(None, None, search_pattern="unique", search_dir=SUB_DATA_DIR,
+                                         search_sub_dir=True)
+            self.assertFalse(found_list)
+        except InvalidDataError as e:
+            self.assertTrue("No files to process" in e.args[0])
+        finally:
+            silent_remove(NEW_DIR, disable=DISABLE_REMOVE, dir_with_files=True)
 
 
 class TestMakeDir(unittest.TestCase):

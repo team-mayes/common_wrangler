@@ -13,6 +13,8 @@ import re
 import errno
 import fnmatch
 import math
+import shutil
+
 import numpy as np
 import os
 import six
@@ -534,18 +536,22 @@ def read_csv_to_list(data_file, delimiter=',', header=False):
 #     return found
 
 
-def silent_remove(filename, disable=False):
+def silent_remove(filename, disable=False, dir_with_files=False):
     """
     Removes the target file name, catching and ignoring errors that indicate that the
     file does not exist.
 
-    @param filename: The file to remove.
-    @param disable: boolean to flag if want to disable removal
+    :param filename: The file to remove.
+    :param disable: boolean to flag if want to disable removal
+    :param dir_with_files: boolean to delete files in dir also
     """
     if not disable:
         try:
             if os.path.isdir(filename):
-                os.rmdir(filename)
+                if dir_with_files:
+                    shutil.rmtree(filename)
+                else:
+                    os.rmdir(filename)
             else:
                 os.remove(filename)
         except OSError as e:
@@ -633,15 +639,19 @@ def find_files_by_dir(tgt_dir, pat):
     return match_dirs
 
 
-def check_file_and_file_list(file_name, file_list_name):
+def check_for_files(file_name, file_list_name, search_pattern=None, search_dir=None, search_sub_dir=False):
     """
     Checks that the file and/or list of files contains valid file names.
     :param file_name: None or str (file_name)
     :param file_list_name: None or str (a file with a list of file names (one per line))
+    :param search_pattern: str, used if searching directories
+    :param search_dir: None (then searches current directory only, if no other choices are selected) or dir rel path
+    :param search_sub_dir: Boolean, if True, search not just given search_dir (current if None) but also subdirs
     :return: a list of valid file names
     """
-    valid_fnames = []
-    invalid_fnames = []
+    # use a set to avoid duplicates, but will return a list
+    valid_fnames = set()
+    invalid_fnames = set()
     if file_list_name is not None:
         with open(file_list_name) as f:
             for line in f:
@@ -650,24 +660,60 @@ def check_file_and_file_list(file_name, file_list_name):
                 if len(fname) == 0:
                     continue
                 if os.path.isfile(fname):
-                    valid_fnames.append(fname)
+                    valid_fnames.add(fname)
                 else:
-                    invalid_fnames.append(fname)
+                    invalid_fnames.add(fname)
     if file_name is not None:
         if os.path.isfile(file_name):
-            valid_fnames.append(file_name)
+            valid_fnames.add(file_name)
         else:
-            invalid_fnames.append(file_name)
+            invalid_fnames.add(file_name)
 
+    # Will only find valid names in searching directories, so raise invalid fnames now
     if len(invalid_fnames) > 0:
         warning_message = "The following file name(s) could not be found:"
         for fname in invalid_fnames:
             warning_message += "\n    {}".format(fname)
         raise IOError(warning_message)
+
+    # Only search directories if there is a pattern to match
+    if search_pattern:
+        # convert to what regex will understand
+        if not ("*" in search_pattern):
+            mod_search_pattern = "*{}*".format(search_pattern)
+        else:
+            mod_search_pattern = search_pattern
+        # change search_dir 'None' to current directory, if: search subdirectory specified, or neither file_name or
+        #     file_list_name is specified (then defaults to check current subdirectory only)
+        if search_dir is None and (search_sub_dir or (file_name is None and file_list_name is None)):
+            search_dir = os.getcwd()
+        if search_dir:
+            if not os.path.isdir(search_dir):
+                raise InvalidDataError("Could not find the specified directory '{}'".format(search_dir))
+            if search_sub_dir:
+                found_file_dict = find_files_by_dir(search_dir, mod_search_pattern)
+                for found_dir, file_names in found_file_dict.items():
+                    for fname in file_names:
+                        valid_fnames.add(os.path.join(found_dir, fname))
+            else:
+                valid_fnames.update([match for match in os.listdir(search_dir)
+                                     if fnmatch.fnmatch(match, mod_search_pattern)])
+
     if len(valid_fnames) == 0:
+        # additional note if did a dir search
+        if search_dir:
+            rel_search_dir = os.path.relpath(search_dir)
+            warning_str = "Could not find files with pattern '{}' in directory '{}'".format(search_pattern,
+                                                                                            rel_search_dir)
+            if search_sub_dir:
+                warning_str += " or its subdirectories."
+            else:
+                warning_str += "."
+            warning(warning_str)
         raise InvalidDataError("No files to process.")
 
-    return valid_fnames
+    # returns a sorted list, for predictability
+    return sorted(valid_fnames)
 
 
 def copytree(src, dst, symlinks=False, ignore=None):
