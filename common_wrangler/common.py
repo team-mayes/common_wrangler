@@ -199,8 +199,8 @@ def capture_stderr(command, *args, **kwargs):
 #     """
 #     Returns the given temperature in Kelvin multiplied by Boltzmann's Constant.
 #
-#     @param temp_k: A temperature in Kelvin.
-#     @return: The given temperature in Kelvin multiplied by Boltzmann's Constant.
+#     :param temp_k: A temperature in Kelvin.
+#     :return: The given temperature in Kelvin multiplied by Boltzmann's Constant.
 #     """
 #     return BOLTZ_CONST * temp_k
 #
@@ -208,9 +208,9 @@ def capture_stderr(command, *args, **kwargs):
 def calc_k(temp, delta_gibbs):
     """
     Returns the rate coefficient calculated from Transition State Theory in inverse seconds
-    @param temp: the temperature in Kelvin
-    @param delta_gibbs: the change in Gibbs free energy in kcal/mol
-    @return: rate coefficient in inverse seconds
+    :param temp: the temperature in Kelvin
+    :param delta_gibbs: the change in Gibbs free energy in kcal/mol
+    :return: rate coefficient in inverse seconds
     """
     return BOLTZ_CONST * temp / PLANCK_CONST * math.exp(-delta_gibbs / (RG * temp))
 
@@ -229,10 +229,10 @@ def calc_dist(a, b):
 def pbc_calc_vector(a, b, box):
     """
     Finds the vectors between two points
-    @param a: xyz coords 1
-    @param b: xyz coords 2
-    @param box: vector with PBC box dimensions
-    @return: returns the vector a - b
+    :param a: xyz coords 1
+    :param b: xyz coords 2
+    :param box: vector with PBC box dimensions
+    :return: returns the vector a - b
     """
     vec = np.subtract(a, b)
     return vec - np.multiply(box, np.asarray(list(map(round, vec / box))))
@@ -241,9 +241,9 @@ def pbc_calc_vector(a, b, box):
 # def first_pbc_image(xyz_coords, box):
 #     """
 #     Moves xyz coords to the first PBC image, centered at the origin
-#     @param xyz_coords: coordinates to center (move to first image)
-#     @param box: PBC box dimensions
-#     @return: xyz coords (np array) moved to the first image
+#     :param xyz_coords: coordinates to center (move to first image)
+#     :param box: PBC box dimensions
+#     :return: xyz coords (np array) moved to the first image
 #     """
 #     return pbc_calc_vector(xyz_coords, XYZ_ORIGIN, box)
 
@@ -266,9 +266,9 @@ def vec_angle(vec_1, vec_2):
     """
     Calculates the angle between the vectors (p2 - p1) and (p0 - p1)
     Note: assumes the vector calculation accounted for the PBC
-    @param vec_1: xyz coordinate for the first pt
-    @param vec_2: xyz for 2nd pt
-    @return: the angle in between the vectors
+    :param vec_1: xyz coordinate for the first pt
+    :param vec_2: xyz for 2nd pt
+    :return: the angle in between the vectors
     """
     unit_vec_1 = unit_vector(vec_1)
     unit_vec_2 = unit_vector(vec_2)
@@ -285,10 +285,10 @@ def vec_dihedral(vec_ba, vec_bc, vec_cd):
       dihedral-torsion-angle-from-four-points-in-cartesian-coordinates-in-python
     Khouli formula
     1 sqrt, 1 cross product
-    @param vec_ba: the vector connecting points b --> a, accounting for pbc
-    @param vec_bc: b --> c
-    @param vec_cd: c --> d
-    @return: dihedral angle in degrees
+    :param vec_ba: the vector connecting points b --> a, accounting for pbc
+    :param vec_bc: b --> c
+    :param vec_cd: c --> d
+    :return: dihedral angle in degrees
     """
     # normalize b1 so that it does not influence magnitude of vector
     # rejections that come next
@@ -316,11 +316,11 @@ def vec_dihedral(vec_ba, vec_bc, vec_cd):
 #     """Yields items from an iterator in iterable chunks.
 #     From https://gist.github.com/ksamuel/1275417
 #
-#     @param seq: The sequence to chunk.
-#     @param chunk_size: The size of the returned chunks.
-#     @param process: The function to use for creating the iterator.  Useful for iterating over different
+#     :param seq: The sequence to chunk.
+#     :param chunk_size: The size of the returned chunks.
+#     :param process: The function to use for creating the iterator.  Useful for iterating over different
 #     data structures.
-#     @return: Chunks of the given size from the given sequence.
+#     :return: Chunks of the given size from the given sequence.
 #     """
 #     it = iter(seq)
 #     while True:
@@ -361,8 +361,8 @@ def file_to_str(f_name):
     """
     Reads and returns the contents of the given file.
 
-    @param f_name: The location of the file to read.
-    @return: The contents of the given file.
+    :param f_name: The location of the file to read.
+    :return: The contents of the given file.
     :raises: IOError if the file can't be opened for reading.
     """
     with open(f_name) as f:
@@ -372,8 +372,8 @@ def file_to_str(f_name):
 def file_rows_to_list(c_file):
     """
     Given the name of a file, returns a list of its rows, after filtering out empty rows
-    @param c_file: file location
-    @return: list of non-empty rows
+    :param c_file: file location
+    :return: list of non-empty rows
     """
     with open(c_file) as f:
         row_list = [row.strip() for row in f.readlines()]
@@ -383,10 +383,10 @@ def file_rows_to_list(c_file):
 def str_to_file(str_val, f_name, mode='w', print_info=False):
     """
     Writes the string to the given file.
-    @param str_val: The string to write.
-    @param f_name: The location of the file to write
-    @param mode: default mode is to overwrite file
-    @param print_info: boolean to specify whether to print action to stdout
+    :param str_val: The string to write.
+    :param f_name: The location of the file to write
+    :param mode: default mode is to overwrite file
+    :param print_info: boolean to specify whether to print action to stdout
     """
     with open(f_name, mode) as f:
         f.write(str_val)
@@ -397,8 +397,8 @@ def str_to_file(str_val, f_name, mode='w', print_info=False):
 def round_to_12th_decimal(val):
     """
     To remove floating point digits that are imprecise due to expected machine precision
-    @param val: a float
-    @return: a float without insignificant digits
+    :param val: a float
+    :return: a float without insignificant digits
     """
     return round(val, SIG_DECIMALS)
 
@@ -423,15 +423,38 @@ def round_sig_figs(num, sig_figs=6):
         return rounded_float
 
 
+def a_to_i(text):
+    """
+    Converts a string to an int if possible
+    :param text: str to possibly be converted
+    :return: either int (if text could be converted) or the same str back
+    """
+    return int(text) if text.isdigit() else text
+
+
+def natural_keys(text):
+    """
+    Helper script for sorting with "natural keys" (e.g. sorts numbers as full numbers, so 222 does not come before 4)
+
+    from https://stackoverflow.com/questions/5967500/how-to-correctly-sort-a-string-with-a-number-inside
+    a_list.sort(key=natural_keys) sorts in human order
+    http://nedbatchelder.com/blog/200712/human_sorting.html
+
+    :param text: str, part of a list to be sorted using "natural keys"
+    :return: the text split into a list of alternating strings and ints to help with sorting
+    """
+    return [a_to_i(c) for c in re.split(r'(\d+)', text)]
+
+
 # TODO: continue adding tests here
 def np_float_array_from_file(data_file, delimiter=" ", header=False, gather_hist=False):
     """
     Adds to the basic np.loadtxt by performing data checks.
-    @param data_file: file expected to have space-separated values, with the same number of entries per row
-    @param delimiter: default is a space-separated file
-    @param header: default is no header; alternately, specify number of header lines
-    @param gather_hist: default is false; gather data to make histogram of non-numerical data
-    @return: a numpy array or InvalidDataError if unsuccessful, followed by the header_row (None if none specified)
+    :param data_file: file expected to have space-separated values, with the same number of entries per row
+    :param delimiter: default is a space-separated file
+    :param header: default is no header; alternately, specify number of header lines
+    :param gather_hist: default is false; gather data to make histogram of non-numerical data
+    :return: a numpy array or InvalidDataError if unsuccessful, followed by the header_row (None if none specified)
     """
     header_row = None
     hist_data = {}
@@ -499,10 +522,10 @@ def np_float_array_from_file(data_file, delimiter=" ", header=False, gather_hist
 def read_csv_to_list(data_file, delimiter=',', header=False):
     """
     Reads file of values; did not use np.loadtxt because can have floats and strings
-    @param data_file: name of delimiter-separated file with the same number of entries per row
-    @param delimiter: string: delimiter between column values
-    @param header: boolean to denote if file contains a header
-    @return: a list containing the data (removing header row, if one is specified) and a list containing the
+    :param data_file: name of delimiter-separated file with the same number of entries per row
+    :param delimiter: string: delimiter between column values
+    :param header: boolean to denote if file contains a header
+    :return: a list containing the data (removing header row, if one is specified) and a list containing the
              header row (empty if no header row specified)
     """
     with open(data_file) as csv_file:
@@ -563,9 +586,9 @@ def allow_write(f_loc, overwrite=False):
     """
     Returns whether to allow writing to the given location.
 
-    @param f_loc: The location to check.
-    @param overwrite: Whether to allow overwriting an existing location.
-    @return: Whether to allow writing to the given location.
+    :param f_loc: The location to check.
+    :param overwrite: Whether to allow overwriting an existing location.
+    :return: Whether to allow writing to the given location.
     """
     if os.path.exists(f_loc) and not overwrite:
         warning("Not overwriting existing file '{}'".format(f_loc))
@@ -577,7 +600,7 @@ def allow_write(f_loc, overwrite=False):
 #     """
 #     Renames an existing file using a timestamp based on the move time.
 #
-#     @param f_loc: The location to check.
+#     :param f_loc: The location to check.
 #     """
 #     if os.path.exists(f_loc):
 #         shutil.move(f_loc, create_backup_filename(f_loc))
@@ -586,8 +609,8 @@ def allow_write(f_loc, overwrite=False):
 def get_fname_root(src_file):
     """
 
-    @param src_file:
-    @return: the file root name (no directory, no extension)
+    :param src_file:
+    :return: the file root name (no directory, no extension)
     """
     return os.path.splitext(os.path.basename(src_file))[0]
 
@@ -595,14 +618,14 @@ def get_fname_root(src_file):
 def create_out_fname(src_file, prefix='', suffix='', remove_prefix=None, base_dir=None, ext=None):
     """Creates an outfile name for the given source file.
 
-    @param remove_prefix: string to remove at the beginning of file name
-    @param src_file: The file to process.
-    @param prefix: The file prefix to add, if specified.
-    @param suffix: The file suffix to append, if specified.
-    @param base_dir: The base directory to use; defaults to `src_file`'s directory.
-    @param ext: The extension to use instead of the source file's extension;
+    :param remove_prefix: string to remove at the beginning of file name
+    :param src_file: The file to process.
+    :param prefix: The file prefix to add, if specified.
+    :param suffix: The file suffix to append, if specified.
+    :param base_dir: The base directory to use; defaults to `src_file`'s directory.
+    :param ext: The extension to use instead of the source file's extension;
         defaults to the `scr_file`'s extension.
-    @return: The output file name.
+    :return: The output file name.
     """
 
     if base_dir is None:
@@ -626,9 +649,9 @@ def find_files_by_dir(tgt_dir, pat):
     """Recursively searches the target directory tree for files matching the given pattern.
     The results are returned as a dict with a list of found files keyed by the absolute
     directory name.
-    @param tgt_dir: The target base directory.
-    @param pat: The file pattern to search for.
-    @return: A dict where absolute directory names are keys for lists of found file names
+    :param tgt_dir: The target base directory.
+    :param pat: The file pattern to search for.
+    :return: A dict where absolute directory names are keys for lists of found file names
         that match the given pattern.
     """
     match_dirs = {}
@@ -743,10 +766,10 @@ def copytree(src, dst, symlinks=False, ignore=None):
 
     XXX Consider this example code rather than the ultimate tool.
 
-    @param src: The source directory.
-    @param dst: The destination directory.
-    @param symlinks: Whether to follow symbolic links.
-    @param ignore: A callable for items to ignore at a given level.
+    :param src: The source directory.
+    :param dst: The destination directory.
+    :param symlinks: Whether to follow symbolic links.
+    :param ignore: A callable for items to ignore at a given level.
     """
     names = os.listdir(src)
     if ignore is not None:
@@ -832,13 +855,13 @@ def read_csv(src_file, data_conv=None, all_conv=None, quote_style=csv.QUOTE_MINI
     Reads the given CSV (comma-separated with a first-line header row) and returns a list of
     dicts where each dict contains a row's data keyed by the header row.
 
-    @param src_file: The CSV to read.
-    @param data_conv: A map of header keys to conversion functions.  Note that values
+    :param src_file: The CSV to read.
+    :param data_conv: A map of header keys to conversion functions.  Note that values
         that throw a TypeError from an attempted conversion are left as strings in the result.
-    @param all_conv: A function to apply to all values in the CSV.  A specified data_conv value
+    :param all_conv: A function to apply to all values in the CSV.  A specified data_conv value
         takes precedence.
-    @param quote_style: how to read the dictionary
-    @return: A list of dicts containing the file's data.
+    :param quote_style: how to read the dictionary
+    :return: A list of dicts containing the file's data.
     """
     result = []
     with open(src_file) as csv_file:
@@ -853,13 +876,13 @@ def read_csv_to_dict(src_file, col_name, data_conv=None, all_conv=None):
     Reads the given CSV (comma-separated with a first-line header row) and returns a
     dict of dicts indexed on the given col_name. Each dict contains a row's data keyed by the header row.
 
-    @param src_file: The CSV to read.
-    @param col_name: the name of the column to index on
-    @param data_conv: A map of header keys to conversion functions.  Note that values
+    :param src_file: The CSV to read.
+    :param col_name: the name of the column to index on
+    :param data_conv: A map of header keys to conversion functions.  Note that values
         that throw a TypeError from an attempted conversion are left as strings in the result.
-    @param all_conv: A function to apply to all values in the CSV.  A specified data_conv value
+    :param all_conv: A function to apply to all values in the CSV.  A specified data_conv value
         takes precedence.
-    @return: A list of dicts containing the file's data.
+    :return: A list of dicts containing the file's data.
     """
     result = {}
     with open(src_file) as csv_file:
@@ -893,15 +916,15 @@ def write_csv(data, out_fname, fieldnames, extrasaction="raise", mode='w', quote
     """
     Given a list of dicts and fieldnames, writes a csv
 
-    @param round_digits: if desired, provide decimal number for rounding
-    @param data: The data to write (list of dicts).
-    @param out_fname: The name of the file to write to.
-    @param fieldnames: The sequence of field names to use for the header.
-    @param extrasaction: What to do when there are extra keys.  Acceptable
+    :param round_digits: if desired, provide decimal number for rounding
+    :param data: The data to write (list of dicts).
+    :param out_fname: The name of the file to write to.
+    :param fieldnames: The sequence of field names to use for the header.
+    :param extrasaction: What to do when there are extra keys.  Acceptable
         values are "raise" or "ignore".
-    @param mode: default mode is to overwrite file
-    @param print_message: boolean to flag whether to note that file written or appended
-    @param quote_style: dictates csv output style
+    :param mode: default mode is to overwrite file
+    :param print_message: boolean to flag whether to note that file written or appended
+    :param quote_style: dictates csv output style
     """
     with open(out_fname, mode) as csv_file:
         writer = csv.DictWriter(csv_file, fieldnames, extrasaction=extrasaction, quoting=quote_style)
@@ -918,13 +941,13 @@ def print_csv_stdout(data, fieldnames, extrasaction="raise", mode="w",
     """
     Given a list of dicts and fieldnames, writes a csv to stdout
 
-    @param round_digits: if desired, provide decimal number for rounding
-    @param data: The data to write (list of dicts).
-    @param fieldnames: The sequence of field names to use for the header.
-    @param extrasaction: What to do when there are extra keys.  Acceptable
+    :param round_digits: if desired, provide decimal number for rounding
+    :param data: The data to write (list of dicts).
+    :param fieldnames: The sequence of field names to use for the header.
+    :param extrasaction: What to do when there are extra keys.  Acceptable
         values are "raise" or "ignore".
-    @param mode: default mode is to overwrite file
-    @param quote_style: dictates csv output style
+    :param mode: default mode is to overwrite file
+    :param quote_style: dictates csv output style
     """
     writer = csv.DictWriter(sys.stdout, fieldnames, extrasaction=extrasaction, quoting=quote_style)
     execute_csv_dict_writer(data, mode, round_digits, writer)
@@ -934,10 +957,10 @@ def execute_csv_dict_writer(data, mode, round_digits, writer):
     """
     Common method for csv.DictWriter to file or stdout
 
-    @param writer: a csv.DictWriter object
-    @param data: The data to write (list of dicts).
-    @param round_digits: if desired, provide decimal number for rounding
-    @param mode: if mode is "w", writes header
+    :param writer: a csv.DictWriter object
+    :param data: The data to write (list of dicts).
+    :param round_digits: if desired, provide decimal number for rounding
+    :param mode: if mode is "w", writes header
     """
     if mode == 'w':
         writer.writeheader()
@@ -957,13 +980,13 @@ def list_to_csv(data, out_fname, delimiter=',', mode='w', quote_style=csv.QUOTE_
                 print_message=True, round_digits=False):
     """
     Writes the given data to the given file location.
-    @param data: The data to write (list of lists).
-    @param out_fname: The name of the file to write to.
-    @param delimiter: string
-    @param mode: default mode is to overwrite file
-    @param quote_style: csv quoting style
-    @param print_message: boolean to allow update
-    @param round_digits: boolean to affect printing output; supply an integer to round to that number of decimals
+    :param data: The data to write (list of lists).
+    :param out_fname: The name of the file to write to.
+    :param delimiter: string
+    :param mode: default mode is to overwrite file
+    :param quote_style: csv quoting style
+    :param print_message: boolean to allow update
+    :param round_digits: boolean to affect printing output; supply an integer to round to that number of decimals
     """
     with open(out_fname, mode) as csv_file:
         writer = csv.writer(csv_file, delimiter=delimiter, quoting=quote_style)
@@ -991,12 +1014,12 @@ def read_csv_dict(d_file, ints=True, one_to_one=True, pdb_dict=False, str_float=
     Checks that all keys are unique.
     If one_to_one=True, checks that there 1:1 mapping of keys and values.
 
-    @param d_file: the file with csv of old_id,new_id
-    @param ints: boolean to indicate if the values are to be read as integers
-    @param one_to_one: flag to check for one-to-one mapping in the dict
-    @param pdb_dict: flag to format as required for the PDB output
-    @param str_float: indicates dictionary is a string followed by a float
-    @return: new_dict
+    :param d_file: the file with csv of old_id,new_id
+    :param ints: boolean to indicate if the values are to be read as integers
+    :param one_to_one: flag to check for one-to-one mapping in the dict
+    :param pdb_dict: flag to format as required for the PDB output
+    :param str_float: indicates dictionary is a string followed by a float
+    :return: new_dict
     """
     new_dict = {}
     if pdb_dict:
@@ -1062,12 +1085,12 @@ def list_to_file(list_to_print, fname, list_format=None, delimiter=' ', mode='w'
     """
     Writes the list of sequences to the given file in the specified format for a PDB.
 
-    @param list_to_print: A list of lines to print. The list may be a list of lists, list of strings, or a mixture.
-    @param fname: The location of the file to write.
-    @param list_format: Specified formatting for the line if the line is  list.
-    @param delimiter: If no format is given and the list contains lists, the delimiter will join items in the list.
-    @param print_message: boolean to determine whether to write to output if the file is printed or appended
-    @param mode: write by default; can be changed to allow appending to file.
+    :param list_to_print: A list of lines to print. The list may be a list of lists, list of strings, or a mixture.
+    :param fname: The location of the file to write.
+    :param list_format: Specified formatting for the line if the line is  list.
+    :param delimiter: If no format is given and the list contains lists, the delimiter will join items in the list.
+    :param print_message: boolean to determine whether to write to output if the file is printed or appended
+    :param mode: write by default; can be changed to allow appending to file.
     """
     with open(fname, mode) as w_file:
         for line in list_to_print:
@@ -1093,10 +1116,10 @@ def list_to_file(list_to_print, fname, list_format=None, delimiter=' ', mode='w'
 #     """
 #     Writes the list to the given file, formatted for CP2K to read as qm atom indices.
 #
-#     @param int_list: The list to write.
-#     @param element_name: element type to designate
-#     @param fname: The location of the file to write.
-#     @param mode: default is to write to a new file. Use option to designate to append to existing file.
+#     :param int_list: The list to write.
+#     :param element_name: element type to designate
+#     :param fname: The location of the file to write.
+#     :param mode: default is to write to a new file. Use option to designate to append to existing file.
 #     """
 #     with open(fname, mode) as m_file:
 #         m_file.write('    &QM_KIND {}\n'.format(element_name))
@@ -1110,10 +1133,10 @@ def list_to_file(list_to_print, fname, list_format=None, delimiter=' ', mode='w'
 #     """
 #     Writes the list to the given file, formatted for CP2K to read as qm atom indices.
 #
-#     @param atom_type: (str) MM atom type
-#     @param radius: radius to list for covalent radius (smoothing point charge)
-#     @param fname: The location of the file to write.
-#     @param mode: default is to write to a new file. Use option to designate to append to existing file.
+#     :param atom_type: (str) MM atom type
+#     :param radius: radius to list for covalent radius (smoothing point charge)
+#     :param fname: The location of the file to write.
+#     :param mode: default is to write to a new file. Use option to designate to append to existing file.
 #     """
 #     with open(fname, mode) as m_file:
 #         m_file.write('    &MM_KIND {}\n'.format(atom_type))
@@ -1126,10 +1149,10 @@ def list_to_file(list_to_print, fname, list_format=None, delimiter=' ', mode='w'
 # def print_qm_links(c_alpha_dict, c_beta_dict, f_name, mode="w"):
 #     """
 #     Note: this needs to be tested. Only ran once to get the protein residues set up correctly.
-#     @param c_alpha_dict: dict of protein residue to be broken to c_alpha atom id
-#     @param c_beta_dict: as above, but for c_beta
-#     @param f_name: The location of the file to write.
-#     @param mode: default is to write to a new file. Use option to designate to append to existing file.
+#     :param c_alpha_dict: dict of protein residue to be broken to c_alpha atom id
+#     :param c_beta_dict: as above, but for c_beta
+#     :param f_name: The location of the file to write.
+#     :param mode: default is to write to a new file. Use option to designate to append to existing file.
 #     """
 #     with open(f_name, mode) as m_file:
 #         for resid in c_beta_dict:
@@ -1160,8 +1183,8 @@ def to_list(raw_val):
 def str_to_bool(s):
     """
     Basic converter for Python boolean values written as a str.
-    @param s: The value to convert.
-    @return: The boolean value of the given string.
+    :param s: The value to convert.
+    :return: The boolean value of the given string.
     @raises: ValueError if the string value cannot be converted.
     """
     if s == 'True':
@@ -1179,9 +1202,9 @@ def fmt_row_data(raw_data, fmt_str):
     *This may not be needed at all*
     Now that I'm using csv.QUOTE_NONNUMERIC, generally don't want to format floats to strings
 
-    @param raw_data: The list of dicts to format.
-    @param fmt_str: The format string to use when formatting.
-    @return: The formatted list of dicts.
+    :param raw_data: The list of dicts to format.
+    :param fmt_str: The format string to use when formatting.
+    :return: The formatted list of dicts.
     """
     fmt_rows = []
     for row in raw_data:
@@ -1196,10 +1219,10 @@ def conv_raw_val(param, def_val, int_list=True):
     """
     Converts the given parameter into the given type (default returns the raw value).  Returns the default value
     if the param is None.
-    @param param: The value to convert.
-    @param def_val: The value that determines the type to target.
-    @param int_list: flag to specify if lists should converted to a list of integers
-    @return: The converted parameter value.
+    :param param: The value to convert.
+    :param def_val: The value that determines the type to target.
+    :param int_list: flag to specify if lists should converted to a list of integers
+    :return: The converted parameter value.
     """
     if param is None:
         return def_val
@@ -1224,12 +1247,12 @@ def process_cfg(raw_cfg, def_cfg_vals=None, req_keys=None, int_list=True, store_
     """
     Converts the given raw configuration, filling in defaults and converting the specified value (if any) to the
     default value's type.
-    @param raw_cfg: The configuration map.
-    @param def_cfg_vals: dictionary of default values
-    @param req_keys: dictionary of required types
-    @param int_list: flag to specify if lists should converted to a list of integers
-    @param store_extra_keys: boolean to skip error if there are unexpected keys
-    @return: The processed configuration.
+    :param raw_cfg: The configuration map.
+    :param def_cfg_vals: dictionary of default values
+    :param req_keys: dictionary of required types
+    :param int_list: flag to specify if lists should converted to a list of integers
+    :param store_extra_keys: boolean to skip error if there are unexpected keys
+    :return: The processed configuration.
 
     """
     proc_cfg = {}
@@ -1311,10 +1334,10 @@ def diff_lines(floc1, floc2, delimiter=","):
         If not, test if the line is a csv that has floats and the difference is due to machine precision.
         Be careful if one value is a np.nan, but not the other (the diff evaluates to zero)
         If not, return all lines with differences.
-    @param floc1: file location 1
-    @param floc2: file location 1
-    @param delimiter: defaults to CSV
-    @return: a list of the lines with differences
+    :param floc1: file location 1
+    :param floc2: file location 1
+    :param delimiter: defaults to CSV
+    :return: a list of the lines with differences
     """
     diff_lines_list = []
     # Save diffs to strings to be converted to use csv parser
@@ -1413,8 +1436,8 @@ def unique_list(a_list):
 def conv_str_to_func(func_name):
     """
     Convert a name of a function into a function, if possible
-    @param func_name: string to be converted (if possible)
-    @return: either the function or error
+    :param func_name: string to be converted (if possible)
+    :return: either the function or error
     """
     name_func_dict = {"None": None,
                       "str": str,
@@ -1432,17 +1455,17 @@ def conv_str_to_func(func_name):
 
 # Processing LAMMPS files #
 
-def find_dump_section_state(line, sec_timestep=SEC_TIMESTEP, sec_num_atoms=SEC_NUM_ATOMS, sec_box_size=SEC_BOX_SIZE,
-                            sec_atoms=SEC_ATOMS):
-    atoms_pat = re.compile(r"^ITEM: ATOMS id mol type q x y z.*")
-    if line == 'ITEM: TIMESTEP':
-        return sec_timestep
-    elif line == 'ITEM: NUMBER OF ATOMS':
-        return sec_num_atoms
-    elif line == 'ITEM: BOX BOUNDS pp pp pp':
-        return sec_box_size
-    elif atoms_pat.match(line):
-        return sec_atoms
+# def find_dump_section_state(line, sec_timestep=SEC_TIMESTEP, sec_num_atoms=SEC_NUM_ATOMS, sec_box_size=SEC_BOX_SIZE,
+#                             sec_atoms=SEC_ATOMS):
+#     atoms_pat = re.compile(r"^ITEM: ATOMS id mol type q x y z.*")
+#     if line == 'ITEM: TIMESTEP':
+#         return sec_timestep
+#     elif line == 'ITEM: NUMBER OF ATOMS':
+#         return sec_num_atoms
+#     elif line == 'ITEM: BOX BOUNDS pp pp pp':
+#         return sec_box_size
+#     elif atoms_pat.match(line):
+#         return sec_atoms
 
 
 def process_pdb_file(pdb_file, atom_info_only=False):
@@ -1514,9 +1537,9 @@ def process_pdb_file(pdb_file, atom_info_only=False):
 def longest_common_substring(s1, s2):
     """
     From https://en.wikibooks.org/wiki/Algorithm_Implementation/Strings/Longest_common_substring#Python
-    @param s1: string 1
-    @param s2: string 2
-    @return: string: the longest common string!
+    :param s1: string 1
+    :param s2: string 2
+    :return: string: the longest common string!
     """
     # noinspection PyUnusedLocal
     m = [[0] * (1 + len(s2)) for i in range(1 + len(s1))]

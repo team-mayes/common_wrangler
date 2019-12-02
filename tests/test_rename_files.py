@@ -46,9 +46,9 @@ def get_rename_files_test_list_to_clean():
 def make_files(fname_list, file_dir):
     """
     Create files fresh, because will be moved when program runs
-    @param fname_list: list of file names without directory name
-    @param file_dir: name of the directory where the files should be created
-    return: list of locations of created files
+    :param fname_list: list of file names without directory name
+    :param file_dir: name of the directory where the files should be created
+    :return: list of locations of created files
     """
     initial_fnames = []
     for fname in fname_list:
@@ -61,9 +61,9 @@ def make_files(fname_list, file_dir):
 def get_abs_path(fname_list, abs_dir):
     """
     Create files fresh, because will be moved when program runs
-    @param fname_list: list of file names without directory name
-    @param abs_dir: absolute directory name
-    @return full_name_list: a list of file names with the specified absolute directory
+    :param fname_list: list of file names without directory name
+    :param abs_dir: absolute directory name
+    :return: full_name_list: a list of file names with the specified absolute directory
     """
     full_name_list = []
     for fname in fname_list:
@@ -75,8 +75,8 @@ def get_abs_path(fname_list, abs_dir):
 def count_files(fname_list):
     """
     Counts how many files in list exist
-    @param fname_list: list of file names
-    @return num_existing_files: a list of file names with the specified absolute directory
+    :param fname_list: list of file names
+    :return: num_existing_files: a list of file names with the specified absolute directory
     """
     num_existing_files = 0
     for fname in fname_list:

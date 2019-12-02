@@ -17,7 +17,7 @@ from common_wrangler.common import (find_files_by_dir, read_csv, get_fname_root,
                                     capture_stdout, print_csv_stdout, read_tpl, TemplateNotReadableError,
                                     file_rows_to_list, round_to_12th_decimal, single_quote, calc_dist,
                                     np_float_array_from_file, capture_stderr, round_sig_figs, process_cfg, MAIN_SEC,
-                                    parse_stoich)
+                                    parse_stoich, natural_keys)
 import logging
 
 try:
@@ -398,6 +398,32 @@ class TestRoundingToSigFig(unittest.TestCase):
         rounded_val = round_sig_figs(111111, sig_figs=3)
         self.assertIsInstance(rounded_val, int)
         self.assertEqual(rounded_val, 111000)
+
+
+class TestNaturalSorting(unittest.TestCase):
+    def testTextFloats(self):
+        float_str_list = ["12.1", "94.8", "6.2", "36.1"]
+        float_str_list.sort(key=natural_keys)
+        good_sorted_str_list = ['6.2', '12.1', '36.1', '94.8']
+        self.assertEqual(float_str_list, good_sorted_str_list)
+
+    def testMolFormulas(self):
+        """
+        when I had CH4, I added a trick: after this sort, sort by length:
+            dict_keys.sort(key=natural_keys)
+            dict_keys.sort(key=len)
+        that was good enough for me!
+        """
+        str_list = ["C2H6", "C6H6", "C10H20", "C2H4"]
+        str_list.sort(key=natural_keys)
+        good_sorted_str_list = ["C2H4", "C2H6", "C6H6", "C10H20"]
+        self.assertEqual(str_list, good_sorted_str_list)
+
+    def testTextAlphaNumeric(self):
+        str_list = ["2018AnotherFile.txt", "1956OlderFile.txt", "2019-02-11File_name.txt", "422MuchOlder.text"]
+        str_list.sort(key=natural_keys)
+        sorted_str_list = ["422MuchOlder.text", "1956OlderFile.txt", "2018AnotherFile.txt", "2019-02-11File_name.txt"]
+        self.assertEqual(str_list, sorted_str_list)
 
 
 class TestFnameManipulation(unittest.TestCase):

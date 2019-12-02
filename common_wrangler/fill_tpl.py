@@ -157,13 +157,13 @@ def parse_cmdline(argv=None):
 def fill_save_tpl(cfg, tpl_str, tpl_vals_dict, tpl_name, filled_tpl_name, missing_key_list=None, print_info=True):
     """
     use the dictionary to make the file name and filled template. Then save the file.
-    @param cfg: configuration for run
-    @param tpl_str: the string to be filled to make the filled tpl file
-    @param tpl_vals_dict: dictionary of tpl keys and vals
-    @param tpl_name: the cfg key for the template file name
-    @param filled_tpl_name: the cfg key for the filled template file name
-    @param print_info: print to standard out when a file is printed
-    @param missing_key_list: default is empty list; Gather from the last step (trying to calculate params from
+    :param cfg: configuration for run
+    :param tpl_str: the string to be filled to make the filled tpl file
+    :param tpl_vals_dict: dictionary of tpl keys and vals
+    :param tpl_name: the cfg key for the template file name
+    :param filled_tpl_name: the cfg key for the filled template file name
+    :param print_info: print to standard out when a file is printed
+    :param missing_key_list: default is empty list; Gather from the last step (trying to calculate params from
       other params) any other missing params before throwing error
     """
     # make IDE happy
@@ -202,9 +202,9 @@ def fill_save_tpl(cfg, tpl_str, tpl_vals_dict, tpl_name, filled_tpl_name, missin
 def make_tpl(cfg, tpl_name, filled_tpl_name):
     """
     Combines the dictionary and template file to create the new file(s)
-    @param cfg: configuration for the run
-    @param tpl_name: the cfg key for the template file name
-    @param filled_tpl_name: the cfg key for the filled template file name
+    :param cfg: configuration for the run
+    :param tpl_name: the cfg key for the template file name
+    :param filled_tpl_name: the cfg key for the filled template file name
     """
 
     tpl_str = read_tpl(tpl_name)
