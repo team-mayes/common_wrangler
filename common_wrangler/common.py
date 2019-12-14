@@ -719,8 +719,8 @@ def check_for_files(file_name, file_list_name, search_pattern=None, search_dir=N
                     for fname in file_names:
                         valid_fnames.add(os.path.relpath(os.path.join(found_dir, fname)))
             else:
-                valid_fnames.update([os.path.join(search_dir, match) for match in os.listdir(search_dir)
-                                     if fnmatch.fnmatch(match, mod_search_pattern)])
+                valid_fnames.update([os.path.relpath(os.path.join(search_dir, match)) for match in
+                                     os.listdir(search_dir) if fnmatch.fnmatch(match, mod_search_pattern)])
 
     if len(valid_fnames) == 0:
         # additional note if did a dir search
