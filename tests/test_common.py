@@ -247,7 +247,7 @@ class TestCheckFileFileList(unittest.TestCase):
     def test_name_only(self):
         found_list = check_for_files(ELEM_DICT_FILE, None)
         self.assertTrue(len(found_list) == 1)
-        self.assertTrue(ELEM_DICT_FILE == found_list[0])
+        self.assertTrue(os.path.relpath(ELEM_DICT_FILE) == found_list[0])
 
     def testList(self):
         found_list = check_for_files(None, FILE_LIST)
@@ -284,7 +284,7 @@ class TestCheckFileFileList(unittest.TestCase):
                     f.write("file is opened for business")
             found_list = check_for_files(None, None, search_pattern="unique", search_dir=SUB_DATA_DIR,
                                          search_sub_dir=True)
-            self.assertEqual(found_list, [TEST_DIR_SEARCH_FILE2])
+            self.assertEqual(found_list, [os.path.relpath(TEST_DIR_SEARCH_FILE2)])
         finally:
             silent_remove(NEW_DIR, disable=DISABLE_REMOVE, dir_with_files=True)
 
@@ -298,7 +298,7 @@ class TestCheckFileFileList(unittest.TestCase):
                     f.write("file is opened for business")
             found_list = check_for_files(None, None, search_pattern="*unique", search_dir=SUB_DATA_DIR,
                                          search_sub_dir=True)
-            self.assertEqual(found_list, [TEST_DIR_SEARCH_FILE2])
+            self.assertEqual(found_list, [os.path.relpath(TEST_DIR_SEARCH_FILE2)])
         finally:
             silent_remove(NEW_DIR, disable=DISABLE_REMOVE, dir_with_files=True)
 

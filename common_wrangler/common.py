@@ -683,12 +683,12 @@ def check_for_files(file_name, file_list_name, search_pattern=None, search_dir=N
                 if len(fname) == 0:
                     continue
                 if os.path.isfile(fname):
-                    valid_fnames.add(fname)
+                    valid_fnames.add(os.path.relpath(fname))
                 else:
                     invalid_fnames.add(fname)
     if file_name is not None:
         if os.path.isfile(file_name):
-            valid_fnames.add(file_name)
+            valid_fnames.add(os.path.relpath(file_name))
         else:
             invalid_fnames.add(file_name)
 
@@ -717,7 +717,7 @@ def check_for_files(file_name, file_list_name, search_pattern=None, search_dir=N
                 found_file_dict = find_files_by_dir(search_dir, mod_search_pattern)
                 for found_dir, file_names in found_file_dict.items():
                     for fname in file_names:
-                        valid_fnames.add(os.path.join(found_dir, fname))
+                        valid_fnames.add(os.path.relpath(os.path.join(found_dir, fname)))
             else:
                 valid_fnames.update([os.path.join(search_dir, match) for match in os.listdir(search_dir)
                                      if fnmatch.fnmatch(match, mod_search_pattern)])
