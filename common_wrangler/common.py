@@ -391,7 +391,10 @@ def str_to_file(str_val, f_name, mode='w', print_info=False):
     with open(f_name, mode) as f:
         f.write(str_val)
     if print_info:
-        print("Wrote file: {}".format(f_name))
+        if mode == 'a':
+            print("  Appended: {}".format(f_name))
+        else:
+            print("Wrote file: {}".format(f_name))
 
 
 def round_to_12th_decimal(val):
