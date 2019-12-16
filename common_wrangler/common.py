@@ -662,7 +662,8 @@ def find_files_by_dir(tgt_dir, pat):
     return match_dirs
 
 
-def check_for_files(file_name, file_list_name, search_pattern=None, search_dir=None, search_sub_dir=False):
+def check_for_files(file_name, file_list_name, search_pattern=None, search_dir=None, search_sub_dir=False,
+                    warn_if_no_matches=True):
     """
     Checks that the file and/or list of files contains valid file names.
     :param file_name: None or str (file_name)
@@ -670,6 +671,7 @@ def check_for_files(file_name, file_list_name, search_pattern=None, search_dir=N
     :param search_pattern: str, used if searching directories
     :param search_dir: None (then searches current directory only, if no other choices are selected) or dir rel path
     :param search_sub_dir: Boolean, if True, search not just given search_dir (current if None) but also subdirs
+    :param warn_if_no_matches: Boolean, if True, will raise an InvalidDataError if no files are found
     :return: a list of valid file names
     """
     # use a set to avoid duplicates, but will return a list
@@ -722,7 +724,7 @@ def check_for_files(file_name, file_list_name, search_pattern=None, search_dir=N
                 valid_fnames.update([os.path.relpath(os.path.join(search_dir, match)) for match in
                                      os.listdir(search_dir) if fnmatch.fnmatch(match, mod_search_pattern)])
 
-    if len(valid_fnames) == 0:
+    if len(valid_fnames) == 0 and warn_if_no_matches:
         # additional note if did a dir search
         if search_dir:
             rel_search_dir = os.path.relpath(search_dir)
