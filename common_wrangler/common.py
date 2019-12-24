@@ -34,19 +34,25 @@ TPL_IO_ERR_MSG = "Couldn't read template at: '{}'"
 MISSING_SEC_HEADER_ERR_MSG = "Configuration files must start with a section header such as '[main]'. Check file: {}"
 BACKUP_TS_FMT = "_%Y-%m-%d_%H-%M-%S_%f"
 
-# Boltzmann's Constant in kcal/mol Kelvin
-BOLTZ_CONST = 0.0019872041
-KB = 1.38064852e-23  # [J/K]
+# Boltzmann's Constant in ...
+BOLTZ_CONST = 0.0019872041  # kcal/mol Kelvin
+KB = 1.380649e-23  # [J/K]
 
-# Planck's Constant in kcal s / mol
-PLANCK_CONST = 9.53707E-14
-H = 6.626070e-34  # [Js]
+# Planck's Constant in ...
+PLANCK_CONST = 9.53707e-14  # kcal s / mol
+H = 6.62607015e-34  # [Js]
 
-# Universal gas constant in kcal/mol K
-RG = 0.001985877534
+# Universal gas constant in ...
+RG = 0.001985877534  # kcal/mol K
+GAS_CONSTANT = 8.314462618  # J / K / mol
 
+AVOGADRO_CONST = 6.02214076e23  # 1 / mol
 EHPART_TO_KCAL_MOL = 627.5094709  # [kcal/mol/(Eh/part)]
-KCAL_MOL_TO_J_PART = 4184 / 6.022140857e23
+AMU_TO_KG = 1.66053906660e-27  # UNIT CONVERSION
+AU_TO_J = 4.184 * EHPART_TO_KCAL_MOL * 1000.0  # UNIT CONVERSION
+KCAL_MOL_TO_J_PART = 4184 / AVOGADRO_CONST
+SPEED_OF_LIGHT = 2.99792458e10  # cm / s
+ATM_TO_KPA = 101.325  # 1 atm in kPa
 
 XYZ_ORIGIN = np.zeros(3)
 
@@ -125,9 +131,6 @@ GOOD_RET = 0
 INPUT_ERROR = 1
 IO_ERROR = 2
 INVALID_DATA = 3
-
-PY2 = sys.version_info[0] == 2
-# PY3 = sys.version_info[0] == 3
 
 
 # Exceptions #
