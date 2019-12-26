@@ -17,7 +17,7 @@ from common_wrangler.common import (find_files_by_dir, read_csv, get_fname_root,
                                     capture_stdout, print_csv_stdout, read_tpl, TemplateNotReadableError,
                                     file_rows_to_list, round_to_12th_decimal, single_quote, calc_dist,
                                     np_float_array_from_file, capture_stderr, round_sig_figs, process_cfg, MAIN_SEC,
-                                    parse_stoich, natural_keys)
+                                    parse_stoich, natural_keys, str_to_file, read_csv_to_list)
 import logging
 
 try:
@@ -100,6 +100,7 @@ DIFF_LINES_ALT_SCI_FILE = os.path.join(SUB_DATA_DIR, 'cv_analysis_quat_good.log'
 
 LIST_OUT = os.path.join(SUB_DATA_DIR, "temp.txt")
 GOOD_LIST_OUT = os.path.join(SUB_DATA_DIR, "good_list.txt")
+GOOD_FORMAT_LIST_OUT = os.path.join(SUB_DATA_DIR, "good_format_list.txt")
 
 DEF_FILE_PAT = 'fes*.out'
 
@@ -525,6 +526,18 @@ class TestReadCsv(unittest.TestCase):
             self.assertIsNotNone(row.get(COORD_KEY, None))
             self.assertIsInstance(row[COORD_KEY], float)
 
+    def testReadCsvToList(self):
+        read_list, header = read_csv_to_list(BOX_SIZES_HEADER_COMMA_SEP, header=True)
+        self.assertEqual(header, ['x', 'y', 'z'])
+        self.assertTrue(len(read_list), 4)
+        self.assertTrue(len(read_list[-1]), 3)
+
+    def testReadCsvToListNoHeader(self):
+        read_list, header = read_csv_to_list(BOX_SIZES_NO_HEADER_COMMA_SEP)
+        self.assertEqual(header, [])
+        self.assertTrue(len(read_list), 4)
+        self.assertTrue(len(read_list[-1]), 3)
+
 
 class TestWriteCsv(unittest.TestCase):
     def testWriteCsv(self):
@@ -649,6 +662,15 @@ class TestNDARRAYFromFile(unittest.TestCase):
 
 
 class TestListToFile(unittest.TestCase):
+    def testWriteFormatListAppendList(self):
+        try:
+            list_of_strings = [[1.2, 4.666698], [7.098, 89.1275]]
+            list_to_file(list_of_strings, LIST_OUT, list_format="{:6.2f} {:6.2f}")
+            self.assertFalse(diff_lines(LIST_OUT, GOOD_FORMAT_LIST_OUT))
+        finally:
+            silent_remove(LIST_OUT, disable=DISABLE_REMOVE)
+            pass
+
     def testWriteAppendList(self):
         list_of_strings = ['hello', 'friends']
         list_of_lists = [VEC_23, VEC_34]
@@ -663,6 +685,23 @@ class TestListToFile(unittest.TestCase):
             # list_to_file(list_of_strings, LIST_OUT)
             with capture_stdout(list_to_file, list_of_lists, LIST_OUT, mode="a", print_message=False) as output:
                 self.assertTrue(len(output) == 0)
+            self.assertFalse(diff_lines(LIST_OUT, GOOD_LIST_OUT))
+        finally:
+            silent_remove(LIST_OUT, disable=DISABLE_REMOVE)
+            pass
+
+    def testWriteAppendStr(self):
+        try:
+            rel_list_out = os.path.relpath(LIST_OUT)
+            string1 = "hello\nfriends\n"
+            string2 = "-1.164\n-0.456\n0.149\n0.622 0.563 0.979\n-0.034 -0.441 1.338\n"
+            # str_to_file(string1, rel_list_out, print_info=True)
+            with capture_stdout(str_to_file, string1, rel_list_out, print_info=True) as output:
+                self.assertTrue("Wrote file: tests/test_data/common/temp.txt" in output)
+            # str_to_file(string2, rel_list_out, mode='a', print_info=True)
+            with capture_stdout(str_to_file, string2, rel_list_out, mode="a", print_info=True) as output:
+                self.assertTrue("  Appended: tests/test_data/common/temp.txt" in output)
+
             self.assertFalse(diff_lines(LIST_OUT, GOOD_LIST_OUT))
         finally:
             silent_remove(LIST_OUT, disable=DISABLE_REMOVE)
