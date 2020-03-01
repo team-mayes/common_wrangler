@@ -422,11 +422,15 @@ def round_sig_figs(num, sig_figs=6):
     #    scientific notation
     # Didn't see a clean way to do in python 2.7, so ignoring incompatibility
     # noinspection PyCompatibility
-    rounded_float = float(f'{num:.{sig_figs}g}')
+    str_num = f'{num:.{sig_figs}g}'
     if isinstance(num, int):
-        return int(rounded_float)
+        return int(str_num)
+    elif isinstance(num, np.float64):
+        return np.float64(str_num)
+    elif isinstance(num, np.float32):
+        return np.float32(str_num)
     else:
-        return rounded_float
+        return float(str_num)
 
 
 def a_to_i(text):

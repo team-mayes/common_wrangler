@@ -46,6 +46,7 @@ GOOD_ATOM_DICT = {1: 20, 2: 21, 3: 22, 4: 23, 5: 24, 6: 25, 7: 26, 8: 27, 9: 2, 
                   15: 7, 16: 8, 17: 9, 18: 10, 19: 11, 20: 12, 21: 13, 22: 14, 23: 15, 24: 16, 25: 17, 26: 18, 27: 19}
 
 CSV_FILE = os.path.join(DATA_DIR, SUB_DATA_DIR, 'rad_PMF_last2ns3_1.txt')
+ALT_CSV_FILE = os.path.join(DATA_DIR, SUB_DATA_DIR, 'rad_PMF_last2ns3_1_alt.txt')
 FRENG_TYPES = [float, str]
 
 ONE_KEY_INI = os.path.join(SUB_DATA_DIR, 'one_key_config.ini')
@@ -347,9 +348,8 @@ class TestReadFirstRow(unittest.TestCase):
         self.assertListEqual(CSV_HEADER, read_csv_header(CSV_FILE))
 
     def testSecondRow(self):
-        good_second_row = ["1.0", "inf", "inf"]
-        second_row = read_csv_header(CSV_FILE, return_second_row=True)
-        self.assertEqual(second_row, good_second_row)
+        second_row = read_csv_header(ALT_CSV_FILE, return_second_row=True)
+        self.assertEqual(second_row, read_csv_header(CSV_FILE))
 
     def testEmptyFile(self):
         self.assertIsNone(read_csv_header(EMPTY_CSV))
