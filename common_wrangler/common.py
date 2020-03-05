@@ -443,12 +443,28 @@ def round_to_fraction(array, increment):
     :param increment: float, the fraction of 1 that should be used for rounding
     :return: array, rounded to closest increment
     """
-    remainder = 1. % increment
-    if not np.isclose(remainder, 0.):
-        raise InvalidDataError("This function expects the increment to evenly divide into 1, which is not the case "
-                               "for the provided increment of {}".format(round(increment, 6)))
-    whole_number = round(1. / increment, 0)
-    return np.around(np.multiply(array, whole_number)) / whole_number
+    try:
+        # only one integer is allowable: 1
+        if not (isinstance(increment, float) or increment == 1):
+            raise InvalidDataError
+        if increment < 0:
+            raise InvalidDataError
+        tolerance = 1e-6
+        base_10_log = -np.log10(increment)
+        if base_10_log < 0:
+            raise InvalidDataError
+        diff = abs(base_10_log - round(base_10_log, 0))
+        if diff < tolerance:
+            return np.around(array, int(base_10_log))
+        remainder = 1. % increment
+        if remainder > tolerance:
+            raise InvalidDataError
+        whole_number = round(1. / increment, 0)
+        return np.around(np.multiply(array, whole_number)) / whole_number
+    except InvalidDataError:
+        raise InvalidDataError("This function expects a positive number that evenly divides into 1 (that is, 1 is a "
+                               "multiple of the provided number), which is not the case for the provided increment "
+                               "of {}".format(increment))
 
 
 def a_to_i(text):

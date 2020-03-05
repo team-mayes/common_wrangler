@@ -18,7 +18,7 @@ from common_wrangler.common import (find_files_by_dir, read_csv, get_fname_root,
                                     file_rows_to_list, round_to_12th_decimal, single_quote, calc_dist,
                                     np_float_array_from_file, capture_stderr, round_sig_figs, process_cfg, MAIN_SEC,
                                     parse_stoich, natural_keys, str_to_file, read_csv_to_list, round_to_fraction,
-                                    InvalidInputError, make_fig)
+                                    make_fig)
 import logging
 
 try:
@@ -414,6 +414,36 @@ class TestRoundingToSigFig(unittest.TestCase):
 
 
 class TestRoundToFraction(unittest.TestCase):
+    def testClosestInteger(self):
+        test_array = [0.256, 0.02, 1.8767, 2.432, 8.174, 4.63, 2.82, 5.311]
+        expected_out = [0., 0., 2., 2., 8., 5., 3., 5.]
+        array_out = round_to_fraction(test_array, 1)
+        self.assertTrue(np.allclose(array_out, expected_out))
+
+    def testClosestIntegerFloat(self):
+        test_array = [0.256, 0.02, 1.8767, 2.432, 8.174, 4.63, 2.82, 5.311]
+        expected_out = [0., 0., 2., 2., 8., 5., 3., 5.]
+        array_out = round_to_fraction(test_array, 1.0)
+        self.assertTrue(np.allclose(array_out, expected_out))
+
+    def testClosestTenth(self):
+        test_array = [0.256, 0.02, 1.8767, 2.432, 8.174, 4.63, 2.82, 5.311]
+        expected_out = [0.3, 0.0, 1.9, 2.4, 8.2, 4.6, 2.8, 5.3]
+        array_out = round_to_fraction(test_array, 0.1)
+        self.assertTrue(np.allclose(array_out, expected_out))
+
+    def testClosestHundredth(self):
+        test_array = [0.25612, 9., 1.8767, 2.4323145, 8.174048, 4.638, 2.82, 5.31111]
+        expected_out = [0.26, 9., 1.88, 2.43, 8.17, 4.64, 2.82, 5.31]
+        array_out = round_to_fraction(test_array, 0.01)
+        self.assertTrue(np.allclose(array_out, expected_out))
+
+    def testClosestMilli(self):
+        test_array = [0.25612, 9., 1.8767, 2.4323145, 8.174048, 4.638, 2.82, 5.31111]
+        expected_out = [0.256, 9., 1.877, 2.432, 8.174, 4.638, 2.82, 5.311]
+        array_out = round_to_fraction(test_array, 0.001)
+        self.assertTrue(np.allclose(array_out, expected_out))
+
     def testClosestHalf(self):
         test_array = [0.256, 0.02, 1.8767, 2.432, 8.174, 4.63, 2.82, 5.311]
         expected_out = [0.5, 0.0, 2.0, 2.5, 8.0, 4.5, 3.0, 5.5]
@@ -436,10 +466,42 @@ class TestRoundToFraction(unittest.TestCase):
     def testNotFractionOfOne(self):
         try:
             test_array = [0.256, 0.02, 1.8767, 2.432, 8.174, 4.63, 2.82, 5.311]
-            round_to_fraction(test_array, 0.17)
+            round_to_fraction(test_array, 0.0011)
             self.assertFalse("I should have had an error before I got here.")
         except InvalidDataError as e:
-            self.assertTrue("evenly divide into 1" in e.args[0])
+            self.assertTrue("evenly divides into 1" in e.args[0])
+
+    def testFractionTen(self):
+        try:
+            test_array = [0.256, 0.02, 1.8767, 2.432, 8.174, 4.63, 2.82, 5.311]
+            round_to_fraction(test_array, 10.)
+            self.assertFalse("I should have had an error before I got here.")
+        except InvalidDataError as e:
+            self.assertTrue("evenly divides into 1" in e.args[0])
+
+    def testFractionGreaterThanOne(self):
+        try:
+            test_array = [0.256, 0.02, 1.8767, 2.432, 8.174, 4.63, 2.82, 5.311]
+            round_to_fraction(test_array, 11.1)
+            self.assertFalse("I should have had an error before I got here.")
+        except InvalidDataError as e:
+            self.assertTrue("evenly divides into 1" in e.args[0])
+
+    def testNegNumber(self):
+        try:
+            test_array = [0.256, 0.02, 1.8767, 2.432, 8.174, 4.63, 2.82, 5.311]
+            round_to_fraction(test_array, -.1)
+            self.assertFalse("I should have had an error before I got here.")
+        except InvalidDataError as e:
+            self.assertTrue("positive number" in e.args[0])
+
+    def testNonFloat(self):
+        try:
+            test_array = [0.256, 0.02, 1.8767, 2.432, 8.174, 4.63, 2.82, 5.311]
+            round_to_fraction(test_array, "0.1")
+            self.assertFalse("I should have had an error before I got here.")
+        except InvalidDataError as e:
+            self.assertTrue("positive number" in e.args[0])
 
 
 class TestNaturalSorting(unittest.TestCase):
