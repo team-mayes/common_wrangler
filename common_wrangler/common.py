@@ -457,7 +457,8 @@ def round_to_fraction(array, increment):
         if diff < tolerance:
             return np.around(array, int(base_10_log))
         remainder = 1. % increment
-        if remainder > tolerance:
+        # sometimes the remainder is almost the increment--check for that, too
+        if remainder > tolerance and (increment - remainder) > tolerance:
             raise InvalidDataError
         whole_number = round(1. / increment, 0)
         return np.around(np.multiply(array, whole_number)) / whole_number

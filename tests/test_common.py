@@ -450,6 +450,12 @@ class TestRoundToFraction(unittest.TestCase):
         array_out = round_to_fraction(test_array, 0.5)
         self.assertTrue(np.allclose(array_out, expected_out))
 
+    def testClosestTwentieth(self):
+        test_array = [0.256, 0.02, 1.8767, 2.432, 8.174, 4.63, 2.82, 5.311]
+        expected_out = [0.25, 0., 1.9, 2.45, 8.15, 4.65, 2.8, 5.3]
+        array_out = round_to_fraction(test_array, 0.05)
+        self.assertTrue(np.allclose(array_out, expected_out))
+
     def testClosestQuarter(self):
         test_array = [0.256, 0.02, 1.8767, 2.432, 8.174, 4.63, 2.82, 5.311]
         expected_out = [0.25, 0.00, 2.00, 2.50, 8.25, 4.75, 2.75, 5.25]
