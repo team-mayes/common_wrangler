@@ -424,13 +424,31 @@ def round_sig_figs(num, sig_figs=6):
     # noinspection PyCompatibility
     str_num = f'{num:.{sig_figs}g}'
     if isinstance(num, int):
-        return int(str_num)
+        intermediate_val = float(str_num)
+        return int(intermediate_val)
     elif isinstance(num, np.float64):
         return np.float64(str_num)
     elif isinstance(num, np.float32):
         return np.float32(str_num)
     else:
         return float(str_num)
+
+
+def round_to_fraction(array, increment):
+    """
+    Numpy around, trunc, ceil, floor, ... can round numbers based on base 10 (e.g. 0.01).
+    The method can round to any fraction of 1
+    FYI: only tested on positive numbers. Check behavior for negative numbers if needed.
+    :param array: array_like input data
+    :param increment: float, the fraction of 1 that should be used for rounding
+    :return: array, rounded to closest increment
+    """
+    remainder = 1. % increment
+    if not np.isclose(remainder, 0.):
+        raise InvalidDataError("This function expects the increment to evenly divide into 1, which is not the case "
+                               "for the provided increment of {}".format(round(increment, 6)))
+    whole_number = round(1. / increment, 0)
+    return np.around(np.multiply(array, whole_number)) / whole_number
 
 
 def a_to_i(text):
@@ -1435,6 +1453,7 @@ def diff_lines(floc1, floc2, delimiter=","):
 def unique_list(a_list):
     """ Creates an ordered list from a list of tuples or other hashable items.
     From https://code.activestate.com/recipes/576694/#c6
+    # if used, check if np.unique can do this
     """
     m_map = {}
     o_set = []
@@ -1581,7 +1600,7 @@ def save_figure(name, save_fig=True):
         plt.savefig(name, bbox_inches='tight', transparent=True)
 
 
-def make_fig(name, x_array, y1_array, y1_label="", ls1="-", color1="blue",
+def make_fig(fname, x_array, y1_array, y1_label="", ls1="-", color1="blue",
              x2_array=None, y2_array=None, y2_label="", ls2='--', color2='orange',
              x3_array=None, y3_array=None, y3_label="", ls3=':',
              x4_array=None, y4_array=None, y4_label="", ls4='-.',
@@ -1649,7 +1668,7 @@ def make_fig(name, x_array, y1_array, y1_label="", ls1="-", color1="blue",
         ax.xaxis.grid(True, 'major')
     # ax.yaxis.grid(True, 'minor')
     # ax.yaxis.grid(True, 'major', linewidth=1)
-    save_figure(name)
+    save_figure(fname)
 
 
 # specifically for chemistry

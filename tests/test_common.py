@@ -17,7 +17,8 @@ from common_wrangler.common import (find_files_by_dir, read_csv, get_fname_root,
                                     capture_stdout, print_csv_stdout, read_tpl, TemplateNotReadableError,
                                     file_rows_to_list, round_to_12th_decimal, single_quote, calc_dist,
                                     np_float_array_from_file, capture_stderr, round_sig_figs, process_cfg, MAIN_SEC,
-                                    parse_stoich, natural_keys, str_to_file, read_csv_to_list)
+                                    parse_stoich, natural_keys, str_to_file, read_csv_to_list, round_to_fraction,
+                                    InvalidInputError, make_fig)
 import logging
 
 try:
@@ -77,6 +78,7 @@ GOOD_BOX_NDARRAY_ROW_NAN = np.asarray([[np.nan, np.nan, np.nan],
 VECTOR_VALS = os.path.join(SUB_DATA_DIR, 'vector_input.txt')
 FLOAT_AND_NON = os.path.join(SUB_DATA_DIR, 'msm_sum_output.csv')
 
+SIMPLE_PLOT = os.path.join(SUB_DATA_DIR, 'simple_plot.png')
 
 OUT_PFX = 'rad_'
 
@@ -392,13 +394,52 @@ class TestRoundingToSigFig(unittest.TestCase):
     def testStandardUse(self):
         self.assertAlmostEqual(round_sig_figs(1111.111111111), 1111.11)
 
-    def testSpecifySifFigs(self):
+    def testSpecifySigFigs(self):
         self.assertAlmostEqual(round_sig_figs(1111.111111111, sig_figs=3), 1110.0)
 
-    def testIngSpecifySifFigs(self):
+    def testIntSpecifySigFigs(self):
         rounded_val = round_sig_figs(111111, sig_figs=3)
         self.assertIsInstance(rounded_val, int)
         self.assertEqual(rounded_val, 111000)
+
+    def testFloat64RoundSigFigs(self):
+        input_num = np.float64(1111.111111111)
+        out_num = round_sig_figs(input_num, sig_figs=3)
+        self.assertEqual(type(input_num), type(out_num))
+
+    def testFloat32RoundSigFigs(self):
+        input_num = np.float32(1111.111111111)
+        out_num = round_sig_figs(input_num, sig_figs=3)
+        self.assertEqual(type(input_num), type(out_num))
+
+
+class TestRoundToFraction(unittest.TestCase):
+    def testClosestHalf(self):
+        test_array = [0.256, 0.02, 1.8767, 2.432, 8.174, 4.63, 2.82, 5.311]
+        expected_out = [0.5, 0.0, 2.0, 2.5, 8.0, 4.5, 3.0, 5.5]
+        array_out = round_to_fraction(test_array, 0.5)
+        self.assertTrue(np.allclose(array_out, expected_out))
+
+    def testClosestQuarter(self):
+        test_array = [0.256, 0.02, 1.8767, 2.432, 8.174, 4.63, 2.82, 5.311]
+        expected_out = [0.25, 0.00, 2.00, 2.50, 8.25, 4.75, 2.75, 5.25]
+        array_out = round_to_fraction(test_array, 0.25)
+        self.assertTrue(np.allclose(array_out, expected_out))
+
+    def testClosestThird(self):
+        test_array = [0.256, 0.02, 1.8767, 2.432, 8.174, 4.63, 2.82, 5.311]
+        expected_out = [0.33, 0.00, 2.00, 2.33, 8.33, 4.67, 2.67, 5.33]
+        array_out = round_to_fraction(test_array, 1./3.)
+        array_out = np.around(array_out, 2)
+        self.assertTrue(np.allclose(array_out, expected_out))
+
+    def testNotFractionOfOne(self):
+        try:
+            test_array = [0.256, 0.02, 1.8767, 2.432, 8.174, 4.63, 2.82, 5.311]
+            round_to_fraction(test_array, 0.17)
+            self.assertFalse("I should have had an error before I got here.")
+        except InvalidDataError as e:
+            self.assertTrue("evenly divide into 1" in e.args[0])
 
 
 class TestNaturalSorting(unittest.TestCase):
@@ -925,3 +966,15 @@ class TestChemistry(unittest.TestCase):
         new_stoich_dict = parse_stoich(add_stoich, add_to_dict=ini_stoich_dict)
         good_stoich_dict = {'C': 7, 'H': 8}
         self.assertEqual(new_stoich_dict, good_stoich_dict)
+
+
+class TestPlotting(unittest.TestCase):
+    def testSimplePlot(self):
+        silent_remove(SIMPLE_PLOT)
+        x_values = [0.02, 1.27, 2.28, 3.27, 4.3, 5.32, 6.35, 7.4, 8.08, 9.71, 10.69]
+        y_values = [75901, 616236, 304071, 880000, 864863, 299723, 297125, 289680, 684642, 256205, 1320600]
+        x_label = "Time (min)"
+        y_label = "Intensities (unscaled)"
+        make_fig(SIMPLE_PLOT, x_values, y_values, x_label=x_label, y_label=y_label, loc=0)
+        self.assertTrue(os.path.isfile(SIMPLE_PLOT))
+        silent_remove(SIMPLE_PLOT, disable=DISABLE_REMOVE)
