@@ -7,14 +7,12 @@ Common methods for this project and others in the "wrangler" series
 import argparse
 import csv
 import difflib
-# import glob
 import re
-# import shutil
 import errno
 import fnmatch
 import math
 import shutil
-
+from collections import OrderedDict
 import numpy as np
 import os
 import six
@@ -65,7 +63,7 @@ DEF_FIG_DIR = './figs/'
 
 # Tolerance initially based on double standard machine precision of 5 × 10−16 for float64 (decimal64)
 # found to be too stringent
-TOL = 0.00000000001
+TOL = 1.e-8
 # similarly, use this to round away the insignificant digits!
 SIG_DECIMALS = 12
 
@@ -1375,93 +1373,102 @@ def conv_num(s):
 def diff_lines(floc1, floc2, delimiter=","):
     """
     Determine all lines in a file are equal.
-    This function became complicated because of edge cases:
-        Do not want to flag files as different if the only difference is due to machine precision diffs of floats
-    Thus, if the files are not immediately found to be the same:
-        If not, test if the line is a csv that has floats and the difference is due to machine precision.
-        Be careful if one value is a np.nan, but not the other (the diff evaluates to zero)
-        If not, return all lines with differences.
+    If only the following differences are found, the program will return a warning and an empty list
+        -- floating point precision error (relative error within TOL)
+        -- tailing while space
     :param floc1: file location 1
     :param floc2: file location 1
-    :param delimiter: defaults to CSV
+    :param delimiter: str, used to split lines to check for machine precision error
     :return: a list of the lines with differences
     """
     diff_lines_list = []
     # Save diffs to strings to be converted to use csv parser
-    output_plus = ""
-    output_neg = ""
+    output_pos_dict = OrderedDict()
+    output_neg_dict = OrderedDict()
     with open(floc1, 'r') as file1:
         with open(floc2, 'r') as file2:
             diff = list(difflib.ndiff(file1.read().splitlines(), file2.read().splitlines()))
 
-    for line in diff:
+    for line_num, line in enumerate(diff):
         if line.startswith('-') or line.startswith('+'):
             diff_lines_list.append(line)
             if line.startswith('-'):
-                output_neg += line[2:] + '\n'
+                output_neg_dict[line_num] = line[2:]
             elif line.startswith('+'):
-                output_plus += line[2:] + '\n'
+                output_pos_dict[line_num] = line[2:]
 
     if len(diff_lines_list) == 0:
+        # First chance to leave program due to lack of differences
         return diff_lines_list
 
-    warning("Checking for differences between files {} {}".format(floc1, floc2))
-    try:
-        # take care of parentheses
-        for char in ('(', ')', '[', ']'):
-            output_plus = output_plus.replace(char, delimiter)
-            output_neg = output_neg.replace(char, delimiter)
-        # pycharm doesn't know six very well
-        # noinspection PyCallingNonCallable
-        diff_plus_lines = list(csv.reader(six.StringIO(output_plus), delimiter=delimiter, quoting=csv.QUOTE_NONNUMERIC))
-        # noinspection PyCallingNonCallable
-        diff_neg_lines = list(csv.reader(six.StringIO(output_neg), delimiter=delimiter, quoting=csv.QUOTE_NONNUMERIC))
-    except ValueError:
-        diff_plus_lines = output_plus.split('\n')
-        diff_neg_lines = output_neg.split('\n')
-        for diff_list in [diff_plus_lines, diff_neg_lines]:
-            for line_id in range(len(diff_list)):
-                # noinspection PyTypeChecker
-                diff_list[line_id] = [x.strip() for x in diff_list[line_id].split(delimiter)]
+    warning("Checking for differences between files: {}\n          "
+            "                                   and: {}".format(os.path.relpath(floc1), os.path.relpath(floc2)))
+    pos_lines_nums = np.asarray(list(output_pos_dict.keys()))
+    neg_lines_nums = np.asarray(list(output_neg_dict.keys()))
 
-    if len(diff_plus_lines) == len(diff_neg_lines):
-        # if the same number of lines, there is a chance that the difference is only due to difference in
-        # floating point precision. Check each value of the line, split on whitespace or comma
-        diff_lines_list = []
-        for line_plus, line_neg in zip(diff_plus_lines, diff_neg_lines):
-            if len(line_plus) == len(line_neg):
-                # print("Checking for differences between: ", line_neg, line_plus)
-                for item_plus, item_neg in zip(line_plus, line_neg):
-                    try:
-                        item_plus = float(item_plus)
-                        item_neg = float(item_neg)
-                        # if difference greater than the tolerance, the difference is not just precision
-                        # Note: if only one value is nan, the float diff is zero!
-                        #  Thus, check for diffs only if neither are nan; show different if only one is nan
-                        diff_vals = False
-                        if np.isnan(item_neg) != np.isnan(item_plus):
-                            diff_vals = True
-                            warning("Comparing '{}' to '{}'.".format(item_plus, item_neg))
-                        elif not (np.isnan(item_neg) and np.isnan(item_plus)):
-                            # noinspection PyTypeChecker
-                            if not np.isclose(item_neg, item_plus, TOL):
-                                diff_vals = True
-                                warning("Values {} and {} differ.".format(item_plus, item_neg))
-                        if diff_vals:
-                            diff_lines_list.append("- " + " ".join(map(str, line_neg)))
-                            diff_lines_list.append("+ " + " ".join(map(str, line_plus)))
-                            break
-                    except ValueError:
-                        # not floats, so the difference is not just precision
-                        if item_plus != item_neg:
-                            diff_lines_list.append("- " + " ".join(map(str, line_neg)))
-                            diff_lines_list.append("+ " + " ".join(map(str, line_plus)))
-                            break
-            # Not the same number of items in the lines
-            else:
-                diff_lines_list.append("- " + " ".join(map(str, line_neg)))
-                diff_lines_list.append("+ " + " ".join(map(str, line_plus)))
-    return diff_lines_list
+    if len(pos_lines_nums) != len(neg_lines_nums):
+        return diff_lines_list
+
+    incr = 100000
+    for pot_incr in [2, -2, 1, -1, 3, -3]:
+        # Account for offset made by difflib.ndiff when pointing out line differences
+        if np.allclose(pos_lines_nums + pot_incr, neg_lines_nums):
+            incr = pot_incr
+            break
+    # If still the original value, the IndexError will catch the resulting error
+
+    # if the same number of lines, possible that differ only in order; can be helpful info for the user
+    if output_pos_dict[pos_lines_nums[0]] == output_neg_dict[neg_lines_nums[0]]:
+        warning("Check for line order differences.")
+        return diff_lines_list
+
+    white_space_diff = False
+    precision_diff = False
+    try:
+        for line_num in pos_lines_nums:
+            # Check for differences in tailing white space (this method ignores them)
+            # check if difference is due to floating point precision. Before using the CSV reader, remove
+            #   types of parenthesis only if in both.
+            pos_line = output_pos_dict[line_num].rstrip()
+            neg_line = output_neg_dict[line_num + incr].rstrip()
+            if neg_line == pos_line:
+                del output_pos_dict[line_num]
+                del output_neg_dict[line_num + incr]
+                white_space_diff = True
+                continue
+            for char in '(', ')', '[', ']', '{', '}':
+                if char in pos_line and char in neg_line:
+                    pos_line = pos_line.replace(char, "")
+                    neg_line = neg_line.replace(char, "")
+            # floats to ints makes life easier
+            pos_line_list = list(csv.reader([pos_line], delimiter=delimiter))[0]
+            neg_line_list = list(csv.reader([neg_line], delimiter=delimiter))[0]
+            if len(pos_line_list) != len(neg_line_list):
+                return diff_lines_list
+            for pos, neg in zip(pos_line_list, neg_line_list):
+                if pos == neg:
+                    continue
+                else:
+                    pos = float(pos)
+                    neg = float(neg)
+                    if np.isclose(pos, neg, rtol=TOL, equal_nan=True):
+                        continue
+                    else:
+                        return diff_lines_list
+            # if didn't return by now, safe to delete the line
+            del output_pos_dict[line_num]
+            del output_neg_dict[line_num + incr]
+            precision_diff = True
+        if len(output_pos_dict) == 0 and len(output_pos_dict) == len(output_neg_dict):
+            if white_space_diff:
+                warning("Files differ in trailing white space.")
+            if precision_diff:
+                warning("Files differ in floating point precision.")
+            return []
+    except (ValueError, IndexError, TypeError):
+        return diff_lines_list
+
+    return diff_lines_list  # likely never get here, but it doesn't hurt...
 
 
 # Data Structures #

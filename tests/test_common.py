@@ -97,6 +97,7 @@ MISS_LINES_MISS_LINE = os.path.join(SUB_DATA_DIR, 'diff_lines_miss_line.csv')
 DIFF_LINES_ONE_NAN = os.path.join(SUB_DATA_DIR, 'diff_lines_one_nan.csv')
 DIFF_LINES_ONE_NAN_PREC_DIFF = os.path.join(SUB_DATA_DIR, 'diff_lines_one_nan.csv')
 DIFF_LINES_STR_DIFF = os.path.join(SUB_DATA_DIR, 'diff_lines_str_diff.csv')
+DIFF_LINES_DIFF_ORDER = os.path.join(SUB_DATA_DIR, 'diff_lines_diff_order.csv')
 
 DIFF_LINES_SCI_FILE = os.path.join(SUB_DATA_DIR, 'cv_analysis_quat.log')
 DIFF_LINES_ALT_SCI_FILE = os.path.join(SUB_DATA_DIR, 'cv_analysis_quat_good.log')
@@ -826,13 +827,25 @@ class TestFormatData(unittest.TestCase):
 
 class TestDiffLines(unittest.TestCase):
     def testSameFile(self):
-        self.assertFalse(diff_lines(DIFF_LINES_BASE_FILE, DIFF_LINES_BASE_FILE))
+        test_input = (DIFF_LINES_BASE_FILE, DIFF_LINES_BASE_FILE)
+        diff_line_list = diff_lines(*test_input)
+        self.assertEqual(len(diff_line_list), 0)
+        with capture_stderr(diff_lines, *test_input) as output:
+            self.assertFalse(output)
 
     def testMachinePrecDiff(self):
-        self.assertFalse(diff_lines(DIFF_LINES_BASE_FILE, DIFF_LINES_PREC_DIFF))
+        test_input = (DIFF_LINES_BASE_FILE, DIFF_LINES_PREC_DIFF)
+        diff_line_list = diff_lines(*test_input)
+        self.assertEqual(len(diff_line_list), 0)
+        with capture_stderr(diff_lines, *test_input) as output:
+            self.assertTrue("floating point precision" in output)
 
     def testMachinePrecDiff2(self):
-        self.assertFalse(diff_lines(DIFF_LINES_PREC_DIFF, DIFF_LINES_BASE_FILE))
+        test_input = (DIFF_LINES_PREC_DIFF, DIFF_LINES_BASE_FILE)
+        diff_line_list = diff_lines(*test_input)
+        self.assertEqual(len(diff_line_list), 0)
+        with capture_stderr(diff_lines, *test_input) as output:
+            self.assertTrue("floating point precision" in output)
 
     def testDiff(self):
         diffs = diff_lines(DIFF_LINES_ONE_VAL_DIFF, DIFF_LINES_BASE_FILE)
@@ -860,14 +873,122 @@ class TestDiffLines(unittest.TestCase):
         diff_line_list = diff_lines(DIFF_LINES_ONE_NAN_PREC_DIFF, DIFF_LINES_ONE_NAN)
         self.assertFalse(diff_line_list)
 
-    def testSciVectorsPrecDiff(self):
-        self.assertFalse(diff_lines(DIFF_LINES_SCI_FILE, DIFF_LINES_ALT_SCI_FILE))
-
     def testStrDiff(self):
         diff = diff_lines(DIFF_LINES_BASE_FILE, DIFF_LINES_STR_DIFF)
-        good_diff = ['- 540000 1.0261450032524644 2.23941837370778 1.2132733704553156 1.491028573368929',
-                     '+ 540000 1.0261450032524644 2.23941837370778 1.2132733704553156 ghost']
+        good_diff = ['- 540000,1.0261450032524644,2.23941837370778,1.2132733704553156,1.491028573368929',
+                     '+ 540000,1.0261450032524644,2.23941837370778,1.2132733704553156,ghost']
         self.assertEqual(diff, good_diff)
+
+    def testDiffOrder(self):
+        # warning("Files differ in trailing white space.")
+        test_input = (DIFF_LINES_BASE_FILE, DIFF_LINES_DIFF_ORDER)
+        diff_line_list = diff_lines(*test_input)
+        self.assertEqual(len(diff_line_list), 2)
+        with capture_stderr(diff_lines, *test_input) as output:
+            self.assertTrue("order" in output)
+
+    def testDiffWhiteSpace(self):
+        temp_file1 = os.path.join(SUB_DATA_DIR, 'temp1.txt')
+        temp_file2 = os.path.join(SUB_DATA_DIR, 'temp2.txt')
+        test_input = (temp_file1, temp_file2)
+        try:
+            for fname in test_input:
+                with open(fname, "w") as f:
+                    f.write("hello")
+                    if fname == temp_file1:
+                        f.write("\n")
+                    else:
+                        f.write("     \n")
+                    f.write("hello\n")
+            diff_line_list = diff_lines(*test_input)
+            self.assertEqual(len(diff_line_list), 0)
+            with capture_stderr(diff_lines, *test_input) as output:
+                self.assertTrue("white space" in output)
+        finally:
+            for fname in test_input:
+                silent_remove(fname, disable=DISABLE_REMOVE)
+            pass
+
+    def testDiffPrecisionWhiteSpaceParens(self):
+        temp_file1 = os.path.join(SUB_DATA_DIR, 'temp1.txt')
+        temp_file2 = os.path.join(SUB_DATA_DIR, 'temp2.txt')
+        test_input = (temp_file1, temp_file2)
+        try:
+            with open(temp_file1, "w") as f:
+                f.write("hello\n")
+                f.write("(3.121,6.78),(3.121,6.78)\n")
+                f.write("\n")
+            with open(temp_file2, "w") as f:
+                f.write("hello        \n")
+                f.write("(3.12099999999999,6.78000000000001),(3.12099999999999,6.78000000000001)\n")
+                f.write("\n")
+            diff_line_list = diff_lines(*test_input)
+            self.assertEqual(len(diff_line_list), 0)
+            with capture_stderr(diff_lines, *test_input) as output:
+                self.assertTrue("white space" in output)
+                self.assertTrue("floating point precision" in output)
+        finally:
+            for fname in test_input:
+                silent_remove(fname, disable=DISABLE_REMOVE)
+            pass
+
+    def testDiffPrecisionNan(self):
+        temp_file1 = os.path.join(SUB_DATA_DIR, 'temp1.txt')
+        temp_file2 = os.path.join(SUB_DATA_DIR, 'temp2.txt')
+        test_input = (temp_file1, temp_file2)
+        try:
+            with open(temp_file1, "w") as f:
+                f.write("nan,3.121\n")
+                f.write("\n")
+            with open(temp_file2, "w") as f:
+                f.write("nan,3.12099999999999\n")
+                f.write("\n")
+            diff_line_list = diff_lines(*test_input)
+            self.assertEqual(len(diff_line_list), 0)
+            with capture_stderr(diff_lines, *test_input) as output:
+                self.assertTrue("floating point precision" in output)
+        finally:
+            for fname in test_input:
+                silent_remove(fname, disable=DISABLE_REMOVE)
+            pass
+
+    def testDiffPrecisionStr(self):
+        temp_file1 = os.path.join(SUB_DATA_DIR, 'temp1.txt')
+        temp_file2 = os.path.join(SUB_DATA_DIR, 'temp2.txt')
+        test_input = (temp_file1, temp_file2)
+        try:
+            with open(temp_file1, "w") as f:
+                f.write("fname,3.121\n")
+                f.write("\n")
+            with open(temp_file2, "w") as f:
+                f.write("fname,3.12099999999999\n")
+                f.write("\n")
+            diff_line_list = diff_lines(*test_input)
+            self.assertEqual(len(diff_line_list), 0)
+            with capture_stderr(diff_lines, *test_input) as output:
+                self.assertTrue("floating point precision" in output)
+        finally:
+            for fname in test_input:
+                silent_remove(fname, disable=DISABLE_REMOVE)
+            pass
+
+    def testDiffStr(self):
+        temp_file1 = os.path.join(SUB_DATA_DIR, 'temp1.txt')
+        temp_file2 = os.path.join(SUB_DATA_DIR, 'temp2.txt')
+        test_input = (temp_file1, temp_file2)
+        try:
+            with open(temp_file1, "w") as f:
+                f.write("fname,3000000000\n")
+                f.write("\n")
+            with open(temp_file2, "w") as f:
+                f.write("f_name,3000000000\n")
+                f.write("\n")
+            diff_line_list = diff_lines(*test_input)
+            self.assertEqual(len(diff_line_list), 2)
+        finally:
+            for fname in test_input:
+                silent_remove(fname, disable=DISABLE_REMOVE)
+            pass
 
 
 class TestQuoteDeQuote(unittest.TestCase):
