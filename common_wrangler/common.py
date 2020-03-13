@@ -1626,9 +1626,9 @@ def save_figure(name, save_fig=True):
 
 def make_fig(fname, x_array, y1_array, y1_label="", ls1="-", color1="blue",
              x2_array=None, y2_array=None, y2_label="", ls2='--', color2='orange',
-             x3_array=None, y3_array=None, y3_label="", ls3=':',
-             x4_array=None, y4_array=None, y4_label="", ls4='-.',
-             x5_array=None, y5_array=None, y5_label="", ls5='-', color4='red',
+             x3_array=None, y3_array=None, y3_label="", ls3=':', color3='green',
+             x4_array=None, y4_array=None, y4_label="", ls4='-.', color4='red',
+             x5_array=None, y5_array=None, y5_label="", ls5='-', color5='purple',
              x_fill=None, y_fill=None, x2_fill=None, y2_fill=None,
              fill1_label=None, fill2_label=None,
              fill_color_1="green", fill_color_2="blue",
@@ -1636,7 +1636,7 @@ def make_fig(fname, x_array, y1_array, y1_label="", ls1="-", color1="blue",
              fig_width=DEF_FIG_WIDTH, fig_height=DEF_FIG_HEIGHT, axis_font_size=DEF_AXIS_SIZE,
              tick_font_size=DEF_TICK_SIZE, hide_x=False):
     """
-    Many defaults to it is easy to adjust
+    Many defaults to provide flexibility
     """
     # rc('text', usetex=True)
     # a general purpose plotting routine; can plot between 1 and 5 curves
@@ -1649,7 +1649,7 @@ def make_fig(fname, x_array, y1_array, y1_label="", ls1="-", color1="blue",
     if y3_array is not None:
         if x3_array is None:
             x3_array = x_array
-        ax.plot(x3_array, y3_array, label=y3_label, ls=ls3, linewidth=3, color='green')
+        ax.plot(x3_array, y3_array, label=y3_label, ls=ls3, linewidth=3, color=color3)
     if y4_array is not None:
         if x4_array is None:
             x4_array = x_array
@@ -1657,7 +1657,7 @@ def make_fig(fname, x_array, y1_array, y1_label="", ls1="-", color1="blue",
     if y5_array is not None:
         if x5_array is None:
             x5_array = x_array
-        ax.plot(x5_array, y5_array, label=y5_label, ls=ls5, linewidth=3, color='purple')
+        ax.plot(x5_array, y5_array, label=y5_label, ls=ls5, linewidth=3, color=color5)
     ax.set_xlabel(x_label, fontsize=axis_font_size)
     ax.set_ylabel(y_label, fontsize=axis_font_size)
     if x_limb is not None:
@@ -1693,6 +1693,7 @@ def make_fig(fname, x_array, y1_array, y1_label="", ls1="-", color1="blue",
     # ax.yaxis.grid(True, 'minor')
     # ax.yaxis.grid(True, 'major', linewidth=1)
     save_figure(fname)
+    plt.close()
 
 
 # specifically for chemistry
