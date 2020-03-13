@@ -1634,7 +1634,7 @@ def make_fig(fname, x_array, y1_array, y1_label="", ls1="-", color1="blue",
              fill_color_1="green", fill_color_2="blue",
              x_label="", y_label="", x_lima=None, x_limb=None, y_lima=None, y_limb=None, loc=0,
              fig_width=DEF_FIG_WIDTH, fig_height=DEF_FIG_HEIGHT, axis_font_size=DEF_AXIS_SIZE,
-             tick_font_size=DEF_TICK_SIZE, hide_x=False):
+             tick_font_size=DEF_TICK_SIZE, hide_x=False, title=""):
     """
     Many defaults to provide flexibility
     """
@@ -1676,6 +1676,8 @@ def make_fig(fname, x_array, y1_array, y1_label="", ls1="-", color1="blue",
     if x2_fill is not None:
         plt.fill_between(x2_fill, y2_fill, 0, color=fill_color_2, alpha='0.5')
 
+    if title:
+        ax.set_title(title)
     ax.tick_params(labelsize=tick_font_size)
     ax.xaxis.set_minor_locator(AutoMinorLocator(5))
     ax.yaxis.set_minor_locator(AutoMinorLocator(5))
