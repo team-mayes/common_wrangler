@@ -61,6 +61,22 @@ DEF_AXIS_SIZE = 20
 DEF_TICK_SIZE = 15
 DEF_FIG_DIR = './figs/'
 
+COLORBREWER_BLUE = "#377eb8"
+COLORBREWER_GREEN = "#4daf4a"
+COLORBREWER_ORANGE = "#ff7f00"
+COLORBREWER_PURPLE = "#984ea3"
+COLORBREWER_RED = "#e41a1c"
+COLORBREWER_LT_BLUE = "#a6cee3"
+COLORBREWER_LT_GREEN = "#b2df8a"
+COLORBREWER_LT_ORANGE = "#fdbf6f"
+COLORBREWER_LT_PURPLE = "#cab2d6"
+COLORBREWER_PINK = "#fb9a99"
+COLORBREWER_LT_GRAY = "#6a3d9a"
+
+COLORBREWER_BROWN = "#ff7f00"
+COLORBREWER_YELLOW = "#ffff33"
+
+
 # Tolerance initially based on double standard machine precision of 5 × 10−16 for float64 (decimal64)
 # found to be too stringent
 TOL = 1.e-8
