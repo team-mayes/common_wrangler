@@ -89,3 +89,39 @@ class TestPlotData(unittest.TestCase):
         x_ticks = cores
         plot_f_loc = os.path.join(SUB_DATA_DIR, "amber_tmafc.png")
         plot_scaling(cores, ns_per_day, x_label, x_ticks, plot_f_loc, location="")
+
+    def testDFT(self):
+        cores = np.array([7, 14, 28])
+        min_per_sp = np.array([39.25166667, 21.50833333, 11.55833333])
+        x_label = 'Number of Bridges Cores'
+        x_ticks = cores
+        y1_label = 'Minutes per single-point calculation'
+        plot_f_loc = os.path.join(SUB_DATA_DIR, "bridges_dft.png")
+
+        ideal_cores = np.array([1, 7, 14, 28])
+        ideal_min_per_sp = np.array([274.7616667, 39.25166667, 19.62583333, 9.812916667])
+        efficiency = np.array([1., 1., .912, .848990627])
+        color1 = COLORBREWER_BLUE
+        color2 = COLORBREWER_GREEN
+        color3 = COLORBREWER_PURPLE
+
+        fig, ax1 = plt.subplots(figsize=(5.0, 2.8))
+        ax1.set_xlabel(x_label)
+        ax1.set_ylabel(y1_label, color=color1)
+        ax1.plot(cores, min_per_sp, color=color1, marker='o', label="real scaling")
+        ax1.plot(ideal_cores, ideal_min_per_sp, color=color2, label="ideal scaling")
+        ax1.tick_params(axis='y', labelcolor=color1)
+        ax1.set_ylim([0., 40])
+
+        ax2 = ax1.twinx()
+        ax2.set_ylabel('efficiency (% real vs. ideal)', color=color3)
+        ax2.plot(ideal_cores, efficiency, color=color3, marker='o', label="efficiency")
+        ax2.tick_params(axis='y', labelcolor=color3)
+        ax2.set_ylim([0., 1.])
+
+        plt.xticks(x_ticks)
+        plt.xlim([1, 28])
+
+        fig.tight_layout()
+        plt.savefig(plot_f_loc, format='png', transparent=True, bbox_inches='tight')
+        plt.close()
