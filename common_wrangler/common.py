@@ -1481,7 +1481,7 @@ def diff_lines(floc1, floc2, delimiter=","):
             if precision_diff:
                 warning("Files differ in floating point precision.")
             return []
-    except (ValueError, IndexError, TypeError):
+    except (ValueError, IndexError, TypeError, KeyError):
         return diff_lines_list
 
     return diff_lines_list  # likely never get here, but it doesn't hurt...
