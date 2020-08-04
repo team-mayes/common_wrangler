@@ -987,14 +987,15 @@ def write_csv(data, out_fname, fieldnames, extrasaction="raise", mode='w', quote
     :param print_message: boolean to flag whether to note that file written or appended
     :param quote_style: dictates csv output style
     """
+    rel_out_name = os.path.relpath(out_fname)
     with open(out_fname, mode) as csv_file:
         writer = csv.DictWriter(csv_file, fieldnames, extrasaction=extrasaction, quoting=quote_style)
         execute_csv_dict_writer(data, mode, round_digits, writer)
     if print_message:
         if mode == 'a':
-            print("  Appended: {}".format(out_fname))
+            print("  Appended: {}".format(rel_out_name))
         elif mode == 'w':
-            print("Wrote file: {}".format(out_fname))
+            print("Wrote file: {}".format(rel_out_name))
 
 
 def print_csv_stdout(data, fieldnames, extrasaction="raise", mode="w",
@@ -1629,28 +1630,29 @@ def longest_common_substring(s1, s2):
 
 # FIGURES
 
-def save_figure(name, save_fig=True):
+def save_figure(f_name, print_msg=True):
     """
     Specifies where and if to save a created figure
-    :param name: Name for the file
-    :param save_fig: boolean as to whether to save fig; defaults to true (specify False if not desired)
+    :param f_name: str, name for the file
+    :param print_msg: boolean as to whether to print a note that a figure was saved
     :return: n/a
     """
-    if save_fig:
-        plt.savefig(name, bbox_inches='tight', transparent=True)
+    plt.savefig(f_name, bbox_inches='tight', transparent=True)
+    if print_msg:
+        print("Wrote file: {}".format(os.path.relpath(f_name)))
 
 
-def make_fig(fname, x_array, y1_array, y1_label="", ls1="-", color1="blue",
-             x2_array=None, y2_array=None, y2_label="", ls2='--', color2='orange',
-             x3_array=None, y3_array=None, y3_label="", ls3=':', color3='green',
-             x4_array=None, y4_array=None, y4_label="", ls4='-.', color4='red',
-             x5_array=None, y5_array=None, y5_label="", ls5='-', color5='purple',
+def make_fig(fname, x_array, y1_array, y1_label="", ls1="-", color1=COLORBREWER_BLUE,
+             x2_array=None, y2_array=None, y2_label="", ls2='--', color2=COLORBREWER_ORANGE,
+             x3_array=None, y3_array=None, y3_label="", ls3=':', color3=COLORBREWER_GREEN,
+             x4_array=None, y4_array=None, y4_label="", ls4='-.', color4=COLORBREWER_RED,
+             x5_array=None, y5_array=None, y5_label="", ls5='-', color5=COLORBREWER_PURPLE,
              x_fill=None, y_fill=None, x2_fill=None, y2_fill=None,
              fill1_label=None, fill2_label=None,
              fill_color_1="green", fill_color_2="blue",
              x_label="", y_label="", x_lima=None, x_limb=None, y_lima=None, y_limb=None, loc=0,
              fig_width=DEF_FIG_WIDTH, fig_height=DEF_FIG_HEIGHT, axis_font_size=DEF_AXIS_SIZE,
-             tick_font_size=DEF_TICK_SIZE, hide_x=False, title=""):
+             tick_font_size=DEF_TICK_SIZE, hide_x=False, title="", print_msg=True):
     """
     Many defaults to provide flexibility
     """
@@ -1710,7 +1712,7 @@ def make_fig(fname, x_array, y1_array, y1_label="", ls1="-", color1="blue",
         ax.xaxis.grid(True, 'major')
     # ax.yaxis.grid(True, 'minor')
     # ax.yaxis.grid(True, 'major', linewidth=1)
-    save_figure(fname)
+    save_figure(fname, print_msg)
     plt.close()
 
 
