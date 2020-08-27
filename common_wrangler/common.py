@@ -1709,7 +1709,7 @@ def make_fig(fname, x_array, y1_array, y1_label="", ls1="-", color1=COLORBREWER_
         plt.fill_between(x2_fill, y2_fill, 0, color=fill_color_2, alpha='0.5')
 
     if title:
-        ax.set_title(title)
+        ax.set_title(title, fontsize=axis_font_size)
     ax.tick_params(labelsize=tick_font_size)
     ax.xaxis.set_minor_locator(AutoMinorLocator(5))
     ax.yaxis.set_minor_locator(AutoMinorLocator(5))

@@ -79,7 +79,7 @@ GOOD_BOX_NDARRAY_ROW_NAN = np.asarray([[np.nan, np.nan, np.nan],
 VECTOR_VALS = os.path.join(SUB_DATA_DIR, 'vector_input.txt')
 FLOAT_AND_NON = os.path.join(SUB_DATA_DIR, 'msm_sum_output.csv')
 
-SIMPLE_PLOT = os.path.join(SUB_DATA_DIR, 'simple_plot.png')
+TEST_PLOT_FNAME = os.path.join(SUB_DATA_DIR, 'sample_plot.png')
 
 OUT_PFX = 'rad_'
 
@@ -1206,12 +1206,53 @@ class TestChemistry(unittest.TestCase):
 
 
 class TestPlotting(unittest.TestCase):
+    """
+    make_fig options not yet tested:
+        x_fill=None, y_fill=None, x2_fill=None, y2_fill=None,
+        fill1_label=None, fill2_label=None,
+        fill_color_1="green", fill_color_2="blue",
+        x_lima=None,
+        fig_width=DEF_FIG_WIDTH, fig_height=DEF_FIG_HEIGHT, axis_font_size=DEF_AXIS_SIZE,
+        tick_font_size=DEF_TICK_SIZE, print_msg=True
+    Options (with values, not None) that will increase coverage:
+        y5_array
+        fill1_label, fill2_label
+        x_fill, x2_fill
+        y_limb with y_lima=None
+    """
     def testSimplePlot(self):
-        silent_remove(SIMPLE_PLOT)
+        # Smoke test only, that there are no errors using these options
+        silent_remove(TEST_PLOT_FNAME)
         x_values = [0.02, 1.27, 2.28, 3.27, 4.3, 5.32, 6.35, 7.4, 8.08, 9.71, 10.69]
         y_values = [75901, 616236, 304071, 880000, 864863, 299723, 297125, 289680, 684642, 256205, 1320600]
         x_label = "Time (min)"
         y_label = "Intensities (unscaled)"
-        make_fig(SIMPLE_PLOT, x_values, y_values, x_label=x_label, y_label=y_label, loc=0)
-        self.assertTrue(os.path.isfile(SIMPLE_PLOT))
-        silent_remove(SIMPLE_PLOT, disable=DISABLE_REMOVE)
+        try:
+            make_fig(TEST_PLOT_FNAME, x_values, y_values, x_label=x_label, y_label=y_label, loc=0)
+            self.assertTrue(os.path.isfile(TEST_PLOT_FNAME))
+        finally:
+            silent_remove(TEST_PLOT_FNAME, disable=DISABLE_REMOVE)
+
+    def testPlotMultYVals(self):
+        # Smoke test only, that there are no errors using these options
+        silent_remove(TEST_PLOT_FNAME)
+        title = 'Free Energy Diagram'
+        x_values = np.array([0,  1, 3, 4, 6, 7, 9, 10, 12, 13])
+        y_values = [np.array([0., 0., 41.16, 41.16, -4.54, -4.54, 39.72, 39.72, -5.61, -5.62]),
+                    np.array([0., 0., 42.76, 42.75, -3.42, -3.42, 40.39, 40.39, -5.80, -5.80]),
+                    np.array([0., 0., 41.13, 41.14, -1.05, -1.05, 40.16, 40.16, -2.26, -2.26]),
+                    np.array([0., 0., 37.44, 37.44, -4.33, -4.33, 33.87, 33.87, -11.38, -11.38]),
+                    None]
+        x_label = 'reaction coordinate'
+        y_label = '\u0394G at 460 K (kcal/mol)'
+        y_labels = ['TPA', 'IPA', 'PDC1', 'PDC2', None]
+        try:
+            make_fig(TEST_PLOT_FNAME, x_values, y_values[0], x_label=x_label, y_label=y_label,
+                     y1_label=y_labels[0], y2_label=y_labels[1], y3_label=y_labels[2], y4_label=y_labels[3],
+                     y5_label=y_labels[4], y2_array=y_values[1], y3_array=y_values[2], y4_array=y_values[3],
+                     y5_array=y_values[4], ls2='-', ls3='-', ls4='-', ls5='-',
+                     x_limb=14, y_lima=-15, y_limb=45, loc=0, hide_x=True, title=title)
+            self.assertTrue(os.path.isfile(TEST_PLOT_FNAME))
+        finally:
+            silent_remove(TEST_PLOT_FNAME, disable=DISABLE_REMOVE)
+            pass
