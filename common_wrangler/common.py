@@ -7,10 +7,11 @@ Common methods for this project and others in the "wrangler" series
 import argparse
 import csv
 import difflib
-import re
 import errno
 import fnmatch
+import json
 import math
+import re
 import shutil
 from collections import OrderedDict
 import numpy as np
@@ -503,6 +504,14 @@ def natural_keys(text):
     :return: the text split into a list of alternating strings and ints to help with sorting
     """
     return [a_to_i(c) for c in re.split(r'(\d+)', text)]
+
+
+def read_json(fname):
+    try:
+        with open(fname) as json_file:
+            return json.load(json_file)
+    except json.decoder.JSONDecodeError:
+        raise InvalidDataError(f"Error in reading JSON format for file: {fname}")
 
 
 # TODO: continue adding tests here
@@ -1541,10 +1550,15 @@ def conv_str_to_func(func_name):
 
 
 def process_pdb_file(pdb_file, atom_info_only=False):
+    """
+    Reads pdb_file data and returns in a dictionary format
+    :param pdb_file: str, the location of the file to be read
+    :param atom_info_only: boolean, whether to read the atom coordinates only or all atom data
+    :return: pdb_data, dict organizing pdb data by section
+    """
+    pdb_data = {NUM_ATOMS: 0, SEC_HEAD: [], SEC_ATOMS: [], SEC_TAIL: []}
     if atom_info_only:
-        pdb_data = {NUM_ATOMS: 0, SEC_HEAD: [], SEC_ATOMS: {}, SEC_TAIL: []}
-    else:
-        pdb_data = {NUM_ATOMS: 0, SEC_HEAD: [], SEC_ATOMS: [], SEC_TAIL: []}
+        pdb_data[SEC_ATOMS] = {}
     atom_id = 0
 
     with open(pdb_file) as f:
