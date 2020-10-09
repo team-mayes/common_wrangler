@@ -615,6 +615,15 @@ class TestFnameManipulation(unittest.TestCase):
         new_name = create_out_fname(beginning_name, ext='txt')
         self.assertTrue(new_name == good_end_name)
 
+    def testOutFnameNoPath(self):
+        """
+        Check for prefix addition.
+        """
+        new_fname = create_out_fname("example", prefix=OUT_PFX, ext="txt")
+        print(new_fname)
+        # self.assertTrue(create_out_fname(ORIG_WHAM_PATH, prefix=OUT_PFX).endswith(
+        #     os.sep + OUT_PFX + ORIG_WHAM_FNAME))
+
     def testGetRootName(self):
         root_name = get_fname_root(ORIG_WHAM_PATH)
         self.assertEqual(root_name, ORIG_WHAM_ROOT)
