@@ -154,14 +154,14 @@ def parse_cmdline(argv=None):
     return args, GOOD_RET
 
 
-def fill_save_tpl(out_dir, tpl_str, tpl_vals_dict, tpl_name, filled_tpl_name, missing_key_list=None, print_info=True):
+def fill_save_tpl(tpl_str, tpl_vals_dict, tpl_name, filled_tpl_name, missing_key_list=None, print_info=True):
     """
     use the dictionary to make the file name and filled template. Then save the file.
     :param out_dir: str, to help make output file name, which can be filled so not already created
     :param tpl_str: the string to be filled to make the filled tpl file
     :param tpl_vals_dict: dictionary of tpl keys and vals
-    :param tpl_name: the cfg key for the template file name
-    :param filled_tpl_name: the cfg key for the filled template file name
+    :param tpl_name: the template file name for error reporting only
+    :param filled_tpl_name: str, the filled template file name
     :param print_info: print to standard out when a file is printed
     :param missing_key_list: default is empty list; Gather from the last step (trying to calculate params from
       other params) any other missing params before throwing error
@@ -195,11 +195,11 @@ def fill_save_tpl(out_dir, tpl_str, tpl_vals_dict, tpl_name, filled_tpl_name, mi
         raise KeyError("Key '{}' not found in the configuration but required for filled template file name: {}"
                        "".format(e.args[0], filled_tpl_name))
 
-    tpl_vals_dict[NEW_FNAME] = create_out_fname(filled_fname_str, base_dir=out_dir)
+    tpl_vals_dict[NEW_FNAME] = filled_fname_str
     str_to_file(filled_tpl_str, tpl_vals_dict[NEW_FNAME], print_info=print_info)
 
 
-def make_tpl(tpl_dict, tpl_eq_param_list, out_dir, tpl_name, filled_tpl_name):
+def make_tpl(tpl_dict, tpl_eq_param_list, tpl_name, filled_tpl_name):
     """
     Combines the dictionary and template file to create the new file(s)
     :param tpl_dict: dict with values for filling in the template
@@ -231,9 +231,7 @@ def make_tpl(tpl_dict, tpl_eq_param_list, out_dir, tpl_name, filled_tpl_name):
                 raise InvalidDataError("Could not evaluate the string '{}' specifying the value for the parameter "
                                        "'{}'. Check order of equation entry and/or input parameter values."
                                        "".format(string_to_eval, eq_param))
-
-        fill_save_tpl(out_dir, tpl_str, tpl_vals_dict, tpl_name, filled_tpl_name,
-                      missing_key_list=missing_key_list)
+        fill_save_tpl(tpl_str, tpl_vals_dict, tpl_name, filled_tpl_name, missing_key_list=missing_key_list)
 
 
 def main(argv=None):
@@ -251,7 +249,8 @@ def main(argv=None):
 
     try:
         # tpl_dict, tpl_eq_param_list, out_dir, tpl_name, filled_tpl_name
-        make_tpl(cfg[TPL_VAL_DICT], cfg[TPL_EQ_PARAMS], cfg[OUT_DIR], cfg[TPL_FNAME], cfg[FILLED_TPL_FNAME])
+        cfg[FILLED_TPL_FNAME] = create_out_fname(cfg[FILLED_TPL_FNAME], base_dir=cfg[OUT_DIR])
+        make_tpl(cfg[TPL_VAL_DICT], cfg[TPL_EQ_PARAMS], cfg[TPL_FNAME], cfg[FILLED_TPL_FNAME])
     except (TemplateNotReadableError, IOError) as e:
         warning("Problems reading file: {}".format(e))
         return IO_ERROR
