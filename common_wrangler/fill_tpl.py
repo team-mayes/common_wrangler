@@ -27,7 +27,7 @@ TPL_EQS_SEC = 'tpl_equations'
 VALID_SEC_NAMES = [MAIN_SEC, TPL_VALS_SEC, TPL_EQS_SEC]
 
 # for storing template values
-TPL_VALS = 'parameter_values'
+TPL_VAL_DICT = 'parameter_value_dict'
 TPL_EQ_PARAMS = 'calculated_parameter_names'
 
 # Defaults
@@ -69,7 +69,7 @@ def read_cfg(f_loc, cfg_proc=process_cfg):
         raise IOError('Could not read file {}'.format(f_loc))
 
     # Start with empty template value dictionaries to be filled
-    proc = {TPL_VALS: collections.OrderedDict(), TPL_EQ_PARAMS: collections.OrderedDict()}
+    proc = {TPL_VAL_DICT: collections.OrderedDict(), TPL_EQ_PARAMS: collections.OrderedDict()}
 
     if MAIN_SEC not in config.sections():
         raise InvalidDataError("The configuration file is missing the required '{}' section".format(MAIN_SEC))
@@ -87,7 +87,7 @@ def read_cfg(f_loc, cfg_proc=process_cfg):
             if section == TPL_EQS_SEC:
                 # just keep the names, so we know special processing is required
                 proc[TPL_EQ_PARAMS] = val_ordered_dict.keys()
-            proc[TPL_VALS].update(val_ordered_dict)
+            proc[TPL_VAL_DICT].update(val_ordered_dict)
         else:
             raise InvalidDataError("Section name '{}' in not one of the valid section names: {}"
                                    "".format(section, VALID_SEC_NAMES))
@@ -154,10 +154,10 @@ def parse_cmdline(argv=None):
     return args, GOOD_RET
 
 
-def fill_save_tpl(cfg, tpl_str, tpl_vals_dict, tpl_name, filled_tpl_name, missing_key_list=None, print_info=True):
+def fill_save_tpl(out_dir, tpl_str, tpl_vals_dict, tpl_name, filled_tpl_name, missing_key_list=None, print_info=True):
     """
     use the dictionary to make the file name and filled template. Then save the file.
-    :param cfg: configuration for run
+    :param out_dir: str, to help make output file name, which can be filled so not already created
     :param tpl_str: the string to be filled to make the filled tpl file
     :param tpl_vals_dict: dictionary of tpl keys and vals
     :param tpl_name: the cfg key for the template file name
@@ -195,14 +195,16 @@ def fill_save_tpl(cfg, tpl_str, tpl_vals_dict, tpl_name, filled_tpl_name, missin
         raise KeyError("Key '{}' not found in the configuration but required for filled template file name: {}"
                        "".format(e.args[0], filled_tpl_name))
 
-    tpl_vals_dict[NEW_FNAME] = create_out_fname(filled_fname_str, base_dir=cfg[OUT_DIR])
+    tpl_vals_dict[NEW_FNAME] = create_out_fname(filled_fname_str, base_dir=out_dir)
     str_to_file(filled_tpl_str, tpl_vals_dict[NEW_FNAME], print_info=print_info)
 
 
-def make_tpl(cfg, tpl_name, filled_tpl_name):
+def make_tpl(tpl_dict, tpl_eq_param_list, out_dir, tpl_name, filled_tpl_name):
     """
     Combines the dictionary and template file to create the new file(s)
-    :param cfg: configuration for the run
+    :param tpl_dict: dict with values for filling in the template
+    :param tpl_eq_param_list: list, strings of keys that need other keys to calculate
+    :param out_dir: str, directory where the file should be saved
     :param tpl_name: the cfg key for the template file name
     :param filled_tpl_name: the cfg key for the filled template file name
     """
@@ -211,11 +213,11 @@ def make_tpl(cfg, tpl_name, filled_tpl_name):
     tpl_vals_dict = {}
 
     missing_key_list = []
-    for value_set in itertools.product(*cfg[TPL_VALS].values()):
-        for param, val in zip(cfg[TPL_VALS].keys(), value_set):
+    for value_set in itertools.product(*tpl_dict.values()):
+        for param, val in zip(tpl_dict.keys(), value_set):
             tpl_vals_dict[param] = val
 
-        for eq_param in cfg[TPL_EQ_PARAMS]:
+        for eq_param in tpl_eq_param_list:
             try:
                 string_to_eval = tpl_vals_dict[eq_param].format(**tpl_vals_dict)
             except KeyError as e:
@@ -230,7 +232,8 @@ def make_tpl(cfg, tpl_name, filled_tpl_name):
                                        "'{}'. Check order of equation entry and/or input parameter values."
                                        "".format(string_to_eval, eq_param))
 
-        fill_save_tpl(cfg, tpl_str, tpl_vals_dict, tpl_name, filled_tpl_name, missing_key_list=missing_key_list)
+        fill_save_tpl(out_dir, tpl_str, tpl_vals_dict, tpl_name, filled_tpl_name,
+                      missing_key_list=missing_key_list)
 
 
 def main(argv=None):
@@ -247,7 +250,8 @@ def main(argv=None):
     cfg = args.config
 
     try:
-        make_tpl(cfg, cfg[TPL_FNAME], cfg[FILLED_TPL_FNAME])
+        # tpl_dict, tpl_eq_param_list, out_dir, tpl_name, filled_tpl_name
+        make_tpl(cfg[TPL_VAL_DICT], cfg[TPL_EQ_PARAMS], cfg[OUT_DIR], cfg[TPL_FNAME], cfg[FILLED_TPL_FNAME])
     except (TemplateNotReadableError, IOError) as e:
         warning("Problems reading file: {}".format(e))
         return IO_ERROR

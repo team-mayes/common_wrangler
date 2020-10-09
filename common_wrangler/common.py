@@ -1183,23 +1183,23 @@ def list_to_file(list_to_print, fname, list_format=None, delimiter=' ', mode='w'
             print("  Appended: {}".format(rel_path_fname))
 
 
-# def print_qm_kind(int_list, element_name, fname, mode='w'):
-#     """
-#     Writes the list to the given file, formatted for CP2K to read as qm atom indices.
-#
-#     :param int_list: The list to write.
-#     :param element_name: element type to designate
-#     :param fname: The location of the file to write.
-#     :param mode: default is to write to a new file. Use option to designate to append to existing file.
-#     """
-#     with open(fname, mode) as m_file:
-#         m_file.write('    &QM_KIND {}\n'.format(element_name))
-#         m_file.write('        MM_INDEX {}\n'.format(' '.join(map(str, int_list))))
-#         m_file.write('    &END QM_KIND\n')
-#     if mode == 'w':
-#         print("Wrote file: {}".format(fname))
-#
-#
+def print_qm_kind(int_list, element_name, fname, mode='w'):
+    """
+    Writes the list to the given file, formatted for CP2K to read as qm atom indices.
+
+    :param int_list: The list to write.
+    :param element_name: element type to designate
+    :param fname: The location of the file to write.
+    :param mode: default is to write to a new file. Use option to designate to append to existing file.
+    """
+    with open(fname, mode) as m_file:
+        m_file.write('    &QM_KIND {}\n'.format(element_name))
+        m_file.write('        MM_INDEX {}\n'.format(' '.join(map(str, int_list))))
+        m_file.write('    &END QM_KIND\n')
+    if mode == 'w':
+        print("Wrote file: {}".format(fname))
+
+
 # def print_mm_kind(atom_type, radius, fname, mode='w'):
 #     """
 #     Writes the list to the given file, formatted for CP2K to read as qm atom indices.
@@ -1217,22 +1217,22 @@ def list_to_file(list_to_print, fname, list_format=None, delimiter=' ', mode='w'
 #         print("Wrote file: {}".format(fname))
 #
 #
-# def print_qm_links(c_alpha_dict, c_beta_dict, f_name, mode="w"):
-#     """
-#     Note: this needs to be tested. Only ran once to get the protein residues set up correctly.
-#     :param c_alpha_dict: dict of protein residue to be broken to c_alpha atom id
-#     :param c_beta_dict: as above, but for c_beta
-#     :param f_name: The location of the file to write.
-#     :param mode: default is to write to a new file. Use option to designate to append to existing file.
-#     """
-#     with open(f_name, mode) as m_file:
-#         for resid in c_beta_dict:
-#             m_file.write('    !! Break resid {} between CA and CB, and cap CB with hydrogen\n'
-#                          '    &LINK\n       MM_INDEX  {}  !! CA\n       QM_INDEX  {}  !! CB\n'
-#                          '       LINK_TYPE  IMOMM\n       ALPHA_IMOMM  1.5\n'
-#                          '    &END LINK\n'.format(resid, c_alpha_dict[resid], c_beta_dict[resid]))
-#     if mode == 'w':
-#         print("Wrote file: {}".format(f_name))
+def print_qm_links(c_alpha_dict, c_beta_dict, f_name, mode="w"):
+    """
+    Note: this needs to be tested. Only ran once to get the protein residues set up correctly.
+    :param c_alpha_dict: dict of protein residue to be broken to c_alpha atom id
+    :param c_beta_dict: as above, but for c_beta
+    :param f_name: The location of the file to write.
+    :param mode: default is to write to a new file. Use option to designate to append to existing file.
+    """
+    with open(f_name, mode) as m_file:
+        for resid in c_beta_dict:
+            m_file.write('    !! Break resid {} between CA and CB, and cap CB with hydrogen\n'
+                         '    &LINK\n       MM_INDEX  {}  !! CA\n       QM_INDEX  {}  !! CB\n'
+                         '       LINK_TYPE  IMOMM\n       ALPHA_IMOMM  1.5\n'
+                         '    &END LINK\n'.format(resid, c_alpha_dict[resid], c_beta_dict[resid]))
+    if mode == 'w':
+        print("Wrote file: {}".format(f_name))
 
 
 # Conversions #
