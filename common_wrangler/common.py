@@ -73,6 +73,9 @@ COLORBREWER_LT_ORANGE = "#fdbf6f"
 COLORBREWER_LT_PURPLE = "#cab2d6"
 COLORBREWER_PINK = "#fb9a99"
 COLORBREWER_LT_GRAY = "#6a3d9a"
+COLOR_SEQUENCE = [COLORBREWER_BLUE, COLORBREWER_GREEN, COLORBREWER_ORANGE, COLORBREWER_PURPLE, COLORBREWER_RED,
+                  COLORBREWER_LT_BLUE, COLORBREWER_LT_GREEN, COLORBREWER_LT_ORANGE, COLORBREWER_LT_PURPLE,
+                  COLORBREWER_PINK, COLORBREWER_LT_GRAY]
 
 COLORBREWER_BROWN = "#ff7f00"
 COLORBREWER_YELLOW = "#ffff33"
@@ -409,10 +412,11 @@ def str_to_file(str_val, f_name, mode='w', print_info=False):
     with open(f_name, mode) as f:
         f.write(str_val)
     if print_info:
+        rel_path_name = os.path.relpath(f_name)
         if mode == 'a':
-            print("  Appended: {}".format(f_name))
+            print(f"  Appended: {rel_path_name}")
         else:
-            print("Wrote file: {}".format(f_name))
+            print(f"Wrote file: {rel_path_name}")
 
 
 def round_to_12th_decimal(val):
