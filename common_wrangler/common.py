@@ -687,7 +687,7 @@ def get_fname_root(src_file):
     return os.path.splitext(os.path.basename(src_file))[0]
 
 
-def create_out_fname(src_file, prefix='', suffix='', remove_prefix=None, base_dir=None, ext=None):
+def create_out_fname(src_file, prefix='', suffix='', remove_prefix=None, base_dir=None, ext=None, rel_path=False):
     """Creates an outfile name for the given source file.
 
     :param remove_prefix: string to remove at the beginning of file name
@@ -697,6 +697,7 @@ def create_out_fname(src_file, prefix='', suffix='', remove_prefix=None, base_di
     :param base_dir: The base directory to use; defaults to `src_file`'s directory.
     :param ext: The extension to use instead of the source file's extension;
         defaults to the `scr_file`'s extension.
+    :param rel_path: boolean to indicate that the relative path, rather than the absolute path, is returned
     :return: The output file name.
     """
 
@@ -714,7 +715,11 @@ def create_out_fname(src_file, prefix='', suffix='', remove_prefix=None, base_di
     if not ext.startswith("."):
         ext = "." + ext
 
-    return os.path.abspath(os.path.join(base_dir, prefix + base_name + suffix + ext))
+    new_path = os.path.join(base_dir, prefix + base_name + suffix + ext)
+    if rel_path:
+        return os.path.relpath(new_path)
+    else:
+        return os.path.abspath(new_path)
 
 
 def find_files_by_dir(tgt_dir, pat):
@@ -1063,22 +1068,28 @@ def list_to_csv(data, out_fname, delimiter=',', mode='w', quote_style=csv.QUOTE_
     :param print_message: boolean to allow update
     :param round_digits: boolean to affect printing output; supply an integer to round to that number of decimals
     """
-    with open(out_fname, mode) as csv_file:
-        writer = csv.writer(csv_file, delimiter=delimiter, quoting=quote_style)
-        # TODO: see if can replace the "round_digits" if with the execute, but need to write test first
-        # execute_csv_dict_writer(data, 'n', round_digits, writer)
-        if round_digits:
-            for row_id in range(len(data)):
-                new_row = []
-                for val in data[row_id]:
-                    if isinstance(val, float):
-                        new_row.append(round(val, round_digits))
-                    else:
-                        new_row.append(val)
-                data[row_id] = new_row
-        writer.writerows(data)
-    if print_message:
-        print("Wrote file: {}".format(out_fname))
+    try:
+        if not isinstance(data[0], list):
+            data = [data]
+
+        with open(out_fname, mode) as csv_file:
+            writer = csv.writer(csv_file, delimiter=delimiter, quoting=quote_style)
+            # TODO: see if can replace the "round_digits" if with the execute, but need to write test first
+            # execute_csv_dict_writer(data, 'n', round_digits, writer)
+            if round_digits:
+                for row_id in range(len(data)):
+                    new_row = []
+                    for val in data[row_id]:
+                        if isinstance(val, float):
+                            new_row.append(round(val, round_digits))
+                        else:
+                            new_row.append(val)
+                    data[row_id] = new_row
+            writer.writerows(data)
+        if print_message:
+            print("Wrote file: {}".format(out_fname))
+    except csv.Error:
+        raise InvalidDataError("Check input data; Expected a list of values or list of lists of values.")
 
 
 # Other input/output files
@@ -1105,6 +1116,7 @@ def read_csv_dict(d_file, ints=True, one_to_one=True, pdb_dict=False, str_float=
         one_to_one = False
         pdb_dict = False
     # If d_file is None, return the empty dictionary, as no dictionary file was specified
+    base_fname = os.path.relpath(d_file)
     if d_file is not None:
         with open(d_file) as csv_file:
             reader = csv.reader(csv_file)
@@ -1118,10 +1130,9 @@ def read_csv_dict(d_file, ints=True, one_to_one=True, pdb_dict=False, str_float=
                         type_len = len(atom_type)
                         element_type = row[1].strip()
                         if len(element_type) > 2 or type_len > 4:
-                            raise InvalidDataError("Error reading line '{}' in file: {}\n  "
-                                                   "Expected to read atom_type,element_type, with atom type no more "
-                                                   "than 4 characters and element_type no more than 2."
-                                                   "".format(row, d_file))
+                            raise InvalidDataError(f"Error reading line '{row}' in file: {base_fname}\n  "
+                                                   f"Expected to read atom_type,element_type, with atom type no more "
+                                                   f"than 4 characters and element_type no more than 2.")
                         if type_len == 4:
                             atom_type = ' {:s} '.format(atom_type)
                         else:
@@ -1135,16 +1146,15 @@ def read_csv_dict(d_file, ints=True, one_to_one=True, pdb_dict=False, str_float=
                         new_dict[row[0]] = row[1]
                     key_count += 1
                 else:
-                    raise InvalidDataError("Error reading line '{}' in file: {}\n"
-                                           "  Expected exactly two comma-separated values per row."
-                                           "".format(row, d_file))
+                    raise InvalidDataError(f"Error reading line '{row}' in file: {base_fname}\n"
+                                           f"  Expected exactly two comma-separated values per row.")
         if key_count == len(new_dict):
             if one_to_one:
                 for key in new_dict:
                     if not (key in new_dict.values()):
-                        raise InvalidDataError('Did not find a 1:1 mapping of key,val ids in {}'.format(d_file))
+                        raise InvalidDataError(f'Did not find a 1:1 mapping of key,val ids in file: {base_fname}')
         else:
-            raise InvalidDataError('A non-unique key value (first column) found in file: {}\n'.format(d_file))
+            raise InvalidDataError(f'A non-unique key value (first column) found in file: {base_fname}')
     return new_dict
 
 

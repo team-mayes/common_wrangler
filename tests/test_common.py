@@ -9,17 +9,17 @@ import os
 import shutil
 import tempfile
 import unittest
-from common_wrangler.common import (find_files_by_dir, read_csv, get_fname_root, write_csv, str_to_bool,
-                                    read_csv_header, fmt_row_data, calc_k, diff_lines, create_out_fname, dequote,
-                                    quote, conv_raw_val, pbc_calc_vector, pbc_vector_avg, read_csv_dict,
-                                    InvalidDataError, unit_vector, vec_angle, vec_dihedral, check_for_files,
-                                    make_dir, NotFoundError, silent_remove, list_to_file, longest_common_substring,
-                                    capture_stdout, print_csv_stdout, read_tpl, TemplateNotReadableError,
+from common_wrangler.common import (NUM_ATOMS, MAIN_SEC, SEC_ATOMS, SEC_HEAD, SEC_TAIL, ATOM_COORDS, ATOM_TYPE,
+                                    InvalidDataError, NotFoundError, TemplateNotReadableError, find_files_by_dir,
+                                    read_csv, get_fname_root, write_csv, str_to_bool, read_csv_header, fmt_row_data,
+                                    calc_k, diff_lines, create_out_fname, dequote, quote, conv_raw_val,
+                                    pbc_calc_vector, pbc_vector_avg,  unit_vector, vec_angle, vec_dihedral,
+                                    check_for_files, make_dir, silent_remove, list_to_file, list_to_csv,
+                                    longest_common_substring, capture_stdout, print_csv_stdout, read_tpl,
                                     file_rows_to_list, round_to_12th_decimal, single_quote, calc_dist,
-                                    np_float_array_from_file, capture_stderr, round_sig_figs, process_cfg, MAIN_SEC,
-                                    parse_stoich, natural_keys, str_to_file, read_csv_to_list, round_to_fraction,
-                                    make_fig, read_json, process_pdb_file, NUM_ATOMS, SEC_ATOMS, SEC_HEAD, SEC_TAIL,
-                                    ATOM_COORDS, ATOM_TYPE)
+                                    np_float_array_from_file, capture_stderr, round_sig_figs, process_cfg,
+                                    parse_stoich, natural_keys, str_to_file, read_csv_to_list, read_csv_dict,
+                                    round_to_fraction, make_fig, read_json, process_pdb_file)
 import logging
 
 try:
@@ -617,18 +617,22 @@ class TestFnameManipulation(unittest.TestCase):
 
     def testOutFnameNoPath(self):
         """
-        Check for prefix addition.
+        Check for prefix addition, without a path in the input
         """
-        new_fname = create_out_fname("example", prefix=OUT_PFX, ext="txt")
-        print(new_fname)
-        # self.assertTrue(create_out_fname(ORIG_WHAM_PATH, prefix=OUT_PFX).endswith(
-        #     os.sep + OUT_PFX + ORIG_WHAM_FNAME))
+        returned_name = create_out_fname(ORIG_WHAM_ROOT, prefix=OUT_PFX, ext="txt")
+        self.assertTrue(returned_name.endswith(os.sep + OUT_PFX + ORIG_WHAM_FNAME))
 
     def testGetRootName(self):
         root_name = get_fname_root(ORIG_WHAM_PATH)
         self.assertEqual(root_name, ORIG_WHAM_ROOT)
         self.assertNotEqual(root_name, ORIG_WHAM_FNAME)
         self.assertNotEqual(root_name, ORIG_WHAM_PATH)
+
+    def testRelPath(self):
+        input_fname = os.path.join(DATA_DIR, ORIG_WHAM_ROOT)
+        good_returned_name = os.path.relpath(os.path.join(DATA_DIR, ORIG_WHAM_FNAME))
+        returned_name = create_out_fname(input_fname, ext='txt', rel_path=True)
+        self.assertTrue(returned_name == good_returned_name)
 
 
 class TestReadCsvDict(unittest.TestCase):
@@ -637,10 +641,27 @@ class TestReadCsvDict(unittest.TestCase):
         test_dict = read_csv_dict(ATOM_DICT_FILE)
         self.assertEqual(test_dict, GOOD_ATOM_DICT)
 
+    def testReadAtomNumDictAsFloat(self):
+        # Will renumber atoms and then sort them
+        atom_float_dict = {}
+        for key, val in GOOD_ATOM_DICT.items():
+            atom_float_dict[str(key)] = float(val)
+        test_dict = read_csv_dict(ATOM_DICT_FILE, str_float=True)
+        self.assertEqual(test_dict, atom_float_dict)
+
     def testReadPDBDict(self):
         test_type = '  HY1 '
         test_elem = ' H'
         test_dict = read_csv_dict(ELEM_DICT_FILE, pdb_dict=True)
+        self.assertTrue(test_type in test_dict)
+        self.assertEqual(test_elem, test_dict[test_type])
+        self.assertEqual(31, len(test_dict))
+
+    def testReadPDBDictWithBlanks(self):
+        element_dict_file = os.path.join(SUB_DATA_DIR, "element_dict_w_blanks.csv")
+        test_type = ' HNT1 '
+        test_elem = ' H'
+        test_dict = read_csv_dict(element_dict_file, pdb_dict=True)
         self.assertTrue(test_type in test_dict)
         self.assertEqual(test_elem, test_dict[test_type])
         self.assertEqual(31, len(test_dict))
@@ -660,6 +681,33 @@ class TestReadCsvDict(unittest.TestCase):
             self.assertFalse(test_dict)
         except InvalidDataError as e:
             self.assertTrue("Did not find a 1:1 mapping" in e.args[0])
+
+    def testStringDictExtraTerm(self):
+        # Check that fails elegantly
+        input_dict = os.path.join(SUB_DATA_DIR, "element_dict_extra_term.csv")
+        try:
+            test_dict = read_csv_dict(input_dict, ints=False, )
+            self.assertFalse(test_dict)
+        except InvalidDataError as e:
+            self.assertTrue("exactly two" in e.args[0])
+
+    def testStringDictDuplicateTerm(self):
+        # Check that fails elegantly
+        input_dict = os.path.join(SUB_DATA_DIR, "element_dict_dup.csv")
+        try:
+            test_dict = read_csv_dict(input_dict, ints=False, )
+            self.assertFalse(test_dict)
+        except InvalidDataError as e:
+            self.assertTrue("non-unique" in e.args[0])
+
+    def testElementDictKeyTooLong(self):
+        # Check that fails elegantly
+        input_dict = os.path.join(SUB_DATA_DIR, "element_dict_too_long_key.csv")
+        try:
+            test_dict = read_csv_dict(input_dict, pdb_dict=True)
+            self.assertFalse(test_dict)
+        except InvalidDataError as e:
+            self.assertTrue("no more than" in e.args[0])
 
 
 class TestReadCsv(unittest.TestCase):
@@ -831,8 +879,8 @@ class TestNDARRAYFromFile(unittest.TestCase):
 class TestListToFile(unittest.TestCase):
     def testWriteFormatListAppendList(self):
         try:
-            list_of_strings = [[1.2, 4.666698], [7.098, 89.1275]]
-            list_to_file(list_of_strings, LIST_OUT, list_format="{:6.2f} {:6.2f}")
+            list_of_lists_of_floats = [[1.2, 4.666698], [7.098, 89.1275]]
+            list_to_file(list_of_lists_of_floats, LIST_OUT, list_format="{:6.2f} {:6.2f}")
             self.assertFalse(diff_lines(LIST_OUT, GOOD_FORMAT_LIST_OUT))
         finally:
             silent_remove(LIST_OUT, disable=DISABLE_REMOVE)
@@ -870,6 +918,57 @@ class TestListToFile(unittest.TestCase):
                 self.assertTrue("  Appended: tests/test_data/common/temp.txt" in output)
 
             self.assertFalse(diff_lines(LIST_OUT, GOOD_LIST_OUT))
+        finally:
+            silent_remove(LIST_OUT, disable=DISABLE_REMOVE)
+            pass
+
+    def testListToCSV(self):
+        try:
+            good_out = os.path.join(SUB_DATA_DIR, "list_to_csv_good.txt")
+            list_of_lists_of_floats = [[1.2, 4.666698], [7.098, 89.1275]]
+            list_to_csv(list_of_lists_of_floats, LIST_OUT)
+            self.assertFalse(diff_lines(good_out, LIST_OUT))
+        finally:
+            silent_remove(LIST_OUT, disable=DISABLE_REMOVE)
+            pass
+
+    def testListToCSVNotNested(self):
+        try:
+            good_out = os.path.join(SUB_DATA_DIR, "list_to_csv_not_nested_good.txt")
+            list_of_floats = [1.2, 4.666698]
+            list_to_csv(list_of_floats, LIST_OUT, round_digits=3)
+            self.assertFalse(diff_lines(good_out, LIST_OUT))
+        finally:
+            silent_remove(LIST_OUT, disable=DISABLE_REMOVE)
+            pass
+
+    def testListToCSVRoundDigits(self):
+        try:
+            good_out = os.path.join(SUB_DATA_DIR, "list_to_csv_round_digits_good.txt")
+            list_of_lists_of_floats = [[1.2, 4.666698], [7.098, 89.1275]]
+            list_to_csv(list_of_lists_of_floats, LIST_OUT, round_digits=2)
+            self.assertFalse(diff_lines(good_out, LIST_OUT))
+        finally:
+            silent_remove(LIST_OUT, disable=DISABLE_REMOVE)
+            pass
+
+    def testListToCSVListOfListsOfLists(self):
+        list_of_lists_of_lists_of_floats = [[3.4], [[1.2, 4.666698], [7.098, 89.1275]]]
+        try:
+            good_out = os.path.join(SUB_DATA_DIR, "list_to_csv_extra_nesting_good.txt")
+            list_to_csv(list_of_lists_of_lists_of_floats, LIST_OUT, round_digits=3)
+            self.assertFalse(diff_lines(good_out, LIST_OUT))
+        finally:
+            silent_remove(LIST_OUT, disable=DISABLE_REMOVE)
+            pass
+
+    def testListToCSVGivenDict(self):
+        input_dict = {0: [1.2, 4.666698]}
+        try:
+            list_to_csv(input_dict, LIST_OUT, round_digits=3)
+            self.assertFalse("if you see me, raise and error!")
+        except InvalidDataError as e:
+            self.assertTrue("Expected" in e.args[0])
         finally:
             silent_remove(LIST_OUT, disable=DISABLE_REMOVE)
             pass
