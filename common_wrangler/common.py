@@ -1513,21 +1513,21 @@ def diff_lines(floc1, floc2, delimiter=","):
 
 # Data Structures #
 
-# TODO: Continue testing here
-def unique_list(a_list):
-    """ Creates an ordered list from a list of tuples or other hashable items.
+def unique_list(a_hashable):
+    """ Creates an ordered (not_sorted) list from a list of tuples or other hashable items.
     From https://code.activestate.com/recipes/576694/#c6
     # if used, check if np.unique can do this
     """
     m_map = {}
     o_set = []
-    for item in a_list:
+    for item in a_hashable:
         if item not in m_map:
             m_map[item] = 1
             o_set.append(item)
     return o_set
 
 
+# TODO: Continue testing here
 def conv_str_to_func(func_name):
     """
     Convert a name of a function into a function, if possible
@@ -1654,6 +1654,22 @@ def longest_common_substring(s1, s2):
             else:
                 m[x][y] = 0
     return s1[x_longest - longest: x_longest]
+
+
+def assign_color(int_val):
+    """
+    Given an integer, return a color; this function allows repeating colors instead of getting an index error if the
+    index is greater than the length of the color array
+    :param int_val: int, can be zero
+    :return:
+    """
+    num_colors = len(COLOR_SEQUENCE)
+    # catch int = 0, then return the first color
+    if int_val:
+        color_idx = int_val % num_colors
+        return COLOR_SEQUENCE[color_idx]
+    else:
+        return COLOR_SEQUENCE[0]
 
 
 # FIGURES

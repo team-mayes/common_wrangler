@@ -10,16 +10,16 @@ import shutil
 import tempfile
 import unittest
 from common_wrangler.common import (NUM_ATOMS, MAIN_SEC, SEC_ATOMS, SEC_HEAD, SEC_TAIL, ATOM_COORDS, ATOM_TYPE,
-                                    InvalidDataError, NotFoundError, TemplateNotReadableError, find_files_by_dir,
-                                    read_csv, get_fname_root, write_csv, str_to_bool, read_csv_header, fmt_row_data,
-                                    calc_k, diff_lines, create_out_fname, dequote, quote, conv_raw_val,
-                                    pbc_calc_vector, pbc_vector_avg,  unit_vector, vec_angle, vec_dihedral,
+                                    COLOR_SEQUENCE, InvalidDataError, NotFoundError, TemplateNotReadableError,
+                                    find_files_by_dir, read_csv, get_fname_root, write_csv, str_to_bool,
+                                    read_csv_header, fmt_row_data, calc_k, diff_lines, create_out_fname, dequote, quote,
+                                    conv_raw_val, pbc_calc_vector, pbc_vector_avg, unit_vector, vec_angle, vec_dihedral,
                                     check_for_files, make_dir, silent_remove, list_to_file, list_to_csv,
                                     longest_common_substring, capture_stdout, print_csv_stdout, read_tpl,
                                     file_rows_to_list, round_to_12th_decimal, single_quote, calc_dist,
-                                    np_float_array_from_file, capture_stderr, round_sig_figs, process_cfg,
-                                    parse_stoich, natural_keys, str_to_file, read_csv_to_list, read_csv_dict,
-                                    round_to_fraction, make_fig, read_json, process_pdb_file)
+                                    np_float_array_from_file, capture_stderr, round_sig_figs, process_cfg, parse_stoich,
+                                    natural_keys, str_to_file, read_csv_to_list, read_csv_dict, round_to_fraction,
+                                    make_fig, read_json, process_pdb_file, assign_color, unique_list)
 import logging
 
 try:
@@ -87,6 +87,7 @@ OUT_PFX = 'rad_'
 
 CSV_HEADER = ['coord', 'free_energy', 'corr']
 GHOST = 'ghost'
+NUM_COLORS = 11
 
 # Output files #
 
@@ -583,6 +584,25 @@ class TestNaturalSorting(unittest.TestCase):
         str_list.sort(key=natural_keys)
         sorted_str_list = ["422MuchOlder.text", "1956OlderFile.txt", "2018AnotherFile.txt", "2019-02-11File_name.txt"]
         self.assertEqual(str_list, sorted_str_list)
+
+
+class TestUniqueList(unittest.TestCase):
+    def testSameInOut(self):
+        unique_sorted_list = ["alligator", "elephant", "walrus"]
+        returned_list = unique_list(unique_sorted_list)
+        self.assertEqual(returned_list, unique_sorted_list)
+
+    def testRepeatIn(self):
+        unique_sorted_list = ["alligator", "elephant", "walrus"]
+        repeat_sorted_list = ["alligator", "elephant", "elephant", "elephant", "walrus", "walrus"]
+        returned_list = unique_list(repeat_sorted_list)
+        self.assertEqual(returned_list, unique_sorted_list)
+
+    def testUnsortedTuple(self):
+        list_unique = ["walrus", "alligator", "elephant"]
+        repeat_in_tuple = ("walrus", "alligator", "walrus", "elephant", "walrus")
+        returned_list = unique_list(repeat_in_tuple)
+        self.assertEqual(returned_list, list_unique)
 
 
 class TestFnameManipulation(unittest.TestCase):
@@ -1313,6 +1333,20 @@ class TestChemistry(unittest.TestCase):
         self.assertEqual(new_stoich_dict, good_stoich_dict)
 
 
+class TestAssignColor(unittest.TestCase):
+    def testEqualIndex(self):
+        for idx in range(0, NUM_COLORS):
+            self.assertEqual(assign_color(idx), COLOR_SEQUENCE[idx])
+
+    def testFirstWrap(self):
+        for idx in range(0, NUM_COLORS):
+            self.assertEqual(assign_color(idx + NUM_COLORS), COLOR_SEQUENCE[idx])
+
+    def testAnotherWrap(self):
+        for idx in range(0, NUM_COLORS):
+            self.assertEqual(assign_color(idx + NUM_COLORS * 2), COLOR_SEQUENCE[idx])
+
+
 class TestPlotting(unittest.TestCase):
     """
     make_fig options not yet tested:
@@ -1326,6 +1360,7 @@ class TestPlotting(unittest.TestCase):
         fill1_label, fill2_label
         x_fill, x2_fill
     """
+
     def testSimplePlot(self):
         # Smoke test only, that there are no errors using these options
         silent_remove(TEST_PLOT_FNAME)
