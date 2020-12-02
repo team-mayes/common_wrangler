@@ -157,7 +157,6 @@ def parse_cmdline(argv=None):
 def fill_save_tpl(tpl_str, tpl_vals_dict, tpl_name, filled_tpl_name, missing_key_list=None, print_info=True):
     """
     use the dictionary to make the file name and filled template. Then save the file.
-    :param out_dir: str, to help make output file name, which can be filled so not already created
     :param tpl_str: the string to be filled to make the filled tpl file
     :param tpl_vals_dict: dictionary of tpl keys and vals
     :param tpl_name: the template file name for error reporting only
@@ -186,8 +185,9 @@ def fill_save_tpl(tpl_str, tpl_vals_dict, tpl_name, filled_tpl_name, missing_key
             except KeyError as e:
                 missing_key = e.args[0]
     if len(missing_key_list) > 0:
-        raise KeyError("Key(s) '{}' not found in the configuration but required for template file: {}"
-                       "".format("', '".join(missing_key_list), tpl_name))
+        missing_key_str = "', '".join(missing_key_list)
+        raise KeyError(f"Key(s) '{missing_key_str}' not found in the configuration but "
+                       f"required for template file: {tpl_name}")
 
     try:
         filled_fname_str = filled_tpl_name.format(**tpl_vals_dict)
@@ -204,7 +204,6 @@ def make_tpl(tpl_dict, tpl_eq_param_list, tpl_name, filled_tpl_name):
     Combines the dictionary and template file to create the new file(s)
     :param tpl_dict: dict with values for filling in the template
     :param tpl_eq_param_list: list, strings of keys that need other keys to calculate
-    :param out_dir: str, directory where the file should be saved
     :param tpl_name: the cfg key for the template file name
     :param filled_tpl_name: the cfg key for the filled template file name
     """
