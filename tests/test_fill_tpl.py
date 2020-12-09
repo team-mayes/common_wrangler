@@ -228,3 +228,26 @@ class TestMain(unittest.TestCase):
         finally:
             for o_file in MULTI_OUT_FILES:
                 silent_remove(o_file, disable=DISABLE_REMOVE)
+
+    def testKeepValUnderscore(self):
+        config_file = os.path.join(SUB_DATA_DIR, "make_ini.ini")
+        new_file1 = os.path.join(SUB_DATA_DIR, "make_cpp_120_105.ini")
+        new_file2 = os.path.join(SUB_DATA_DIR, "make_cpp_180_70.ini")
+        good_new_file2 = os.path.join(SUB_DATA_DIR, "make_cpp_180_70_good.ini")
+        new_file3 = os.path.join(SUB_DATA_DIR, "cpptraj_vol_density_180_70.in")
+        good_new_file3 = os.path.join(SUB_DATA_DIR, "cpptraj_vol_density_180_70_good.in")
+
+        try:
+            for fname in [new_file1, new_file2, new_file3]:
+                silent_remove(fname)
+            test_input = ["-c", config_file]
+            main(test_input)
+            self.assertTrue(os.path.isfile(new_file1))
+            self.assertFalse(diff_lines(new_file2, good_new_file2))
+            test_input2 = ["-c", new_file2]
+            main(test_input2)
+            self.assertFalse(diff_lines(new_file3, good_new_file3))
+        finally:
+            for fname in [new_file1, new_file2, new_file3]:
+                silent_remove(fname)
+            pass

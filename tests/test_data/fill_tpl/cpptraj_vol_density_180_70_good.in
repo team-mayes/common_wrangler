@@ -1,0 +1,5 @@
+parm pvc-a_dp180_70chains.psf
+trajin pvc-a_dp180_70chains_min_eq0_eq1_prod.dcd
+# volume out pvc-a_dp180_70chains_min_eq0_eq1_prod_volumes.dat
+density out pvc-a_dp180_70chains_min_eq0_eq1_prod.dat
+run

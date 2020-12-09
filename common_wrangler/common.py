@@ -744,7 +744,7 @@ def check_for_files(file_name, file_list_name, search_pattern=None, search_dir=N
     """
     Checks that the file and/or list of files contains valid file names.
     :param file_name: None or str (file_name)
-    :param file_list_name: None or str (a file with a list of file names (one per line))
+    :param file_list_name: None, str, or iterable (a file with a list of file names (one per line))
     :param search_pattern: str, used if searching directories
     :param search_dir: None (then searches current directory only, if no other choices are selected) or dir rel path
     :param search_sub_dir: Boolean, if True, search not just given search_dir (current if None) but also subdirs
@@ -754,22 +754,22 @@ def check_for_files(file_name, file_list_name, search_pattern=None, search_dir=N
     # use a set to avoid duplicates, but will return a list
     valid_fnames = set()
     invalid_fnames = set()
+    file_list = []
     if file_list_name is not None:
-        with open(file_list_name) as f:
-            for line in f:
-                fname = line.strip()
-                # ignore blank lines
-                if len(fname) == 0:
-                    continue
-                if os.path.isfile(fname):
-                    valid_fnames.add(os.path.relpath(fname))
-                else:
-                    invalid_fnames.add(fname)
-    if file_name is not None:
-        if os.path.isfile(file_name):
-            valid_fnames.add(os.path.relpath(file_name))
+        if isinstance(file_list_name, list):
+            file_list = file_list_name
+        elif os.path.isfile(file_list_name):
+            file_list = file_rows_to_list(file_list_name)
         else:
-            invalid_fnames.add(file_name)
+            raise InvalidDataError(f"Expected file name or list but encountered '{file_list_name}'")
+    if file_name is not None:
+        file_list.append(file_name)
+
+    for fname in file_list:
+        if os.path.isfile(fname):
+            valid_fnames.add(os.path.relpath(fname))
+        else:
+            invalid_fnames.add(fname)
 
     # Will only find valid names in searching directories, so raise invalid fnames now
     if len(invalid_fnames) > 0:
@@ -1197,23 +1197,6 @@ def list_to_file(list_to_print, fname, list_format=None, delimiter=' ', mode='w'
             print("  Appended: {}".format(rel_path_fname))
 
 
-def print_qm_kind(int_list, element_name, fname, mode='w'):
-    """
-    Writes the list to the given file, formatted for CP2K to read as qm atom indices.
-
-    :param int_list: The list to write.
-    :param element_name: element type to designate
-    :param fname: The location of the file to write.
-    :param mode: default is to write to a new file. Use option to designate to append to existing file.
-    """
-    with open(fname, mode) as m_file:
-        m_file.write('    &QM_KIND {}\n'.format(element_name))
-        m_file.write('        MM_INDEX {}\n'.format(' '.join(map(str, int_list))))
-        m_file.write('    &END QM_KIND\n')
-    if mode == 'w':
-        print("Wrote file: {}".format(fname))
-
-
 # def print_mm_kind(atom_type, radius, fname, mode='w'):
 #     """
 #     Writes the list to the given file, formatted for CP2K to read as qm atom indices.
@@ -1401,6 +1384,8 @@ def single_quote(s):
 # Comparisons #
 
 def conv_num(s):
+    if "_" in s:
+        return s
     try:
         return int(s)
     except ValueError:
@@ -1527,7 +1512,6 @@ def unique_list(a_hashable):
     return o_set
 
 
-# TODO: Continue testing here
 def conv_str_to_func(func_name):
     """
     Convert a name of a function into a function, if possible
@@ -1545,22 +1529,8 @@ def conv_str_to_func(func_name):
     elif func_name in name_func_dict:
         return name_func_dict[func_name]
     else:
-        raise InvalidDataError("Invalid type entry '{}'. Valid options are ")
-
-
-# Processing LAMMPS files #
-
-# def find_dump_section_state(line, sec_timestep=SEC_TIMESTEP, sec_num_atoms=SEC_NUM_ATOMS, sec_box_size=SEC_BOX_SIZE,
-#                             sec_atoms=SEC_ATOMS):
-#     atoms_pat = re.compile(r"^ITEM: ATOMS id mol type q x y z.*")
-#     if line == 'ITEM: TIMESTEP':
-#         return sec_timestep
-#     elif line == 'ITEM: NUMBER OF ATOMS':
-#         return sec_num_atoms
-#     elif line == 'ITEM: BOX BOUNDS pp pp pp':
-#         return sec_box_size
-#     elif atoms_pat.match(line):
-#         return sec_atoms
+        option_str = "', '".join(name_func_dict.keys())
+        raise InvalidDataError(f"Invalid type entry '{func_name}'. Valid options are: '{option_str}'")
 
 
 def process_pdb_file(pdb_file, atom_info_only=False):

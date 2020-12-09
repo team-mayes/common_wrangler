@@ -124,3 +124,6 @@ temp*
 docs/lignin.tar.gz
 /tests/test_data/scaling/
 /tests/test_data/common/sample_plot.png
+/tests/test_data/fill_tpl/cpptraj_vol_density_180_70.in
+/tests/test_data/fill_tpl/make_cpp_120_105.ini
+/tests/test_data/fill_tpl/make_cpp_180_70.ini

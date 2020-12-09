@@ -19,7 +19,7 @@ from common_wrangler.common import (NUM_ATOMS, MAIN_SEC, SEC_ATOMS, SEC_HEAD, SE
                                     file_rows_to_list, round_to_12th_decimal, single_quote, calc_dist,
                                     np_float_array_from_file, capture_stderr, round_sig_figs, process_cfg, parse_stoich,
                                     natural_keys, str_to_file, read_csv_to_list, read_csv_dict, round_to_fraction,
-                                    make_fig, read_json, process_pdb_file, assign_color, unique_list)
+                                    make_fig, read_json, process_pdb_file, assign_color, conv_str_to_func, unique_list)
 import logging
 
 try:
@@ -251,13 +251,25 @@ class TestCheckFileFileList(unittest.TestCase):
         except IOError as e:
             self.assertTrue("ghost.com" in e.args[0])
 
+    def test_WrongInputType(self):
+        try:
+            found_list = check_for_files(None, 123)
+            self.assertFalse(found_list)
+        except InvalidDataError as e:
+            self.assertTrue("file" in e.args[0])
+
     def test_name_only(self):
         found_list = check_for_files(ELEM_DICT_FILE, None)
         self.assertTrue(len(found_list) == 1)
         self.assertTrue(os.path.relpath(ELEM_DICT_FILE) == found_list[0])
 
-    def testList(self):
+    def testListFile(self):
         found_list = check_for_files(None, FILE_LIST)
+        self.assertTrue(len(found_list) == 4)
+
+    def testList(self):
+        file_list = file_rows_to_list(FILE_LIST)
+        found_list = check_for_files(None, file_list)
         self.assertTrue(len(found_list) == 4)
 
     def testListWithMissingFile(self):
@@ -1421,3 +1433,66 @@ class TestPlotting(unittest.TestCase):
         finally:
             silent_remove(TEST_PLOT_FNAME, disable=DISABLE_REMOVE)
             pass
+
+
+class TestConvStrToFunc(unittest.TestCase):
+    def testToSTR(self):
+        input_str = 'str'
+        test_val = 123.1
+        good_out = str(test_val)
+        # function to test on next line
+        out_func = conv_str_to_func(input_str)
+        out_val = out_func(test_val)
+        self.assertEqual(out_val, good_out)
+        # next to make sure the test was valid...
+        self.assertNotEqual(test_val, out_val)
+
+    def testToInt(self):
+        input_str = 'int'
+        test_val = '124'
+        good_out = int(test_val)
+        # function to test on next line
+        out_func = conv_str_to_func(input_str)
+        out_val = out_func(test_val)
+        self.assertEqual(out_val, good_out)
+        self.assertNotEqual(test_val, out_val)
+
+    def testToFloat(self):
+        input_str = 'float'
+        test_val = '123.1'
+        good_out = float(test_val)
+        # function to test on next line
+        out_func = conv_str_to_func(input_str)
+        out_val = out_func(test_val)
+        self.assertAlmostEqual(out_val, good_out)
+        self.assertNotEqual(test_val, out_val)
+
+    def testToBoolean(self):
+        input_str = 'bool'
+        test_val = 'False'
+        good_out = bool(test_val)
+        # function to test on next line
+        out_func = conv_str_to_func(input_str)
+        out_val = out_func(test_val)
+        self.assertEqual(out_val, good_out)
+        self.assertNotEqual(test_val, out_val)
+
+    def testNoneStr(self):
+        input_str = 'None'
+        out_func = conv_str_to_func(input_str)
+        self.assertIsNone(out_func)
+
+    def testNone(self):
+        input_str = None
+        out_func = conv_str_to_func(input_str)
+        self.assertIsNone(out_func)
+
+    def testNonValidInput(self):
+        input_str = 'ghost'
+        try:
+            # function to test on next line
+            conv_str_to_func(input_str)
+            self.assertFalse("I should not get here...")
+        except InvalidDataError as e:
+            error_str = e.args[0]
+            self.assertTrue(input_str in error_str)
