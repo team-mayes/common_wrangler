@@ -72,7 +72,7 @@ COLORBREWER_LT_GREEN = "#b2df8a"
 COLORBREWER_LT_ORANGE = "#fdbf6f"
 COLORBREWER_LT_PURPLE = "#cab2d6"
 COLORBREWER_PINK = "#fb9a99"
-COLORBREWER_LT_GRAY = "#6a3d9a"
+COLORBREWER_LT_GRAY = "#999999"
 COLOR_SEQUENCE = [COLORBREWER_BLUE, COLORBREWER_GREEN, COLORBREWER_ORANGE, COLORBREWER_PURPLE, COLORBREWER_RED,
                   COLORBREWER_LT_BLUE, COLORBREWER_LT_GREEN, COLORBREWER_LT_ORANGE, COLORBREWER_LT_PURPLE,
                   COLORBREWER_PINK, COLORBREWER_LT_GRAY]
@@ -541,7 +541,10 @@ def np_float_array_from_file(data_file, delimiter=" ", header=False, gather_hist
         data_array = None
         line_len = None
         if header:
-            first_line = 1
+            if isinstance(header, int):
+                first_line = header
+            else:
+                first_line = 1
         else:
             first_line = 0
         for row in csv_list[first_line:]:
@@ -580,6 +583,8 @@ def np_float_array_from_file(data_file, delimiter=" ", header=False, gather_hist
     if np.isnan(data_array).any():
         warning("Encountered entry (or entries) which could not be converted to a float. "
                 "'nan' will be returned for those entries.")
+        if not header:
+            warning("Check if first line is a header, as no header is specified.")
     if len(hist_data) > 0 or header_row:
         if len(hist_data) > 0 and header_row:
             return data_array, header_row, hist_data

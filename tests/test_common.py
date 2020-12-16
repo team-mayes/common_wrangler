@@ -76,7 +76,6 @@ GOOD_BOX_NDARRAY_ROW_NAN = np.asarray([[np.nan, np.nan, np.nan],
                                        [11.89100027, 15.36799955, 18.10500002], [11.375, 14.99599981, 17.98800039],
                                        [11.10300016, 15.60500002, 18.31400013], [10., 14.995, 10.98800039]])
 
-VECTOR_VALS = os.path.join(SUB_DATA_DIR, 'vector_input.txt')
 FLOAT_AND_NON = os.path.join(SUB_DATA_DIR, 'msm_sum_output.csv')
 
 TEST_PLOT_FNAME = os.path.join(SUB_DATA_DIR, 'sample_plot.png')
@@ -874,7 +873,9 @@ class TestNDARRAYFromFile(unittest.TestCase):
         self.assertTrue(np.allclose(test_array, GOOD_BOX_NDARRAY))
 
     def testReadCommaSeparatedWithHeaderNotFlagged(self):
-        test_array = np_float_array_from_file(BOX_SIZES_HEADER_COMMA_SEP, delimiter=',', )
+        with capture_stderr(np_float_array_from_file, BOX_SIZES_HEADER_COMMA_SEP, delimiter=',') as output:
+            self.assertTrue("header" in output)
+        test_array = np_float_array_from_file(BOX_SIZES_HEADER_COMMA_SEP, delimiter=',')
         self.assertTrue(np.allclose(test_array, GOOD_BOX_NDARRAY_ROW_NAN, equal_nan=True))
 
     def testReadCommaSeparatedWithHeaderFlagged(self):
@@ -885,8 +886,9 @@ class TestNDARRAYFromFile(unittest.TestCase):
 
     def testReadNDArrayVectorError(self):
         caught_error = False
+        vector_vals = os.path.join(SUB_DATA_DIR, 'vector_input.txt')
         try:
-            np_float_array_from_file(VECTOR_VALS)
+            np_float_array_from_file(vector_vals)
         except InvalidDataError as e:
             caught_error = True
             self.assertTrue('File contains a vector' in e.args[0])
@@ -895,6 +897,20 @@ class TestNDARRAYFromFile(unittest.TestCase):
     def testReadNDArrayValueError(self):
         # TODO: copy this but test and use hist option, to improve coverage
         with capture_stderr(np_float_array_from_file, FLOAT_AND_NON, header=1, delimiter=",") as output:
+            self.assertTrue("'nan' will be returned" in output)
+        good_header = ['pka_203', '(0, 1)', '(0, 1)_max_rls', '(0, -1)_max_rls', '(0, 1)_max_path',
+                       '(0, 1)_max_path_flow']
+        good_data_array = np.asarray([[6.10918105, 1.04301557, np.nan, np.nan, np.nan, 0.91252645],
+                                      [4.33909619, 1.09081880, np.nan, np.nan, np.nan, 0.87450673],
+                                      [5.54534891, 1.06042369, np.nan, np.nan, np.nan, 0.65756597],
+                                      [5.29792317, 1.08224906, np.nan, np.nan, np.nan, 0.80011857],
+                                      [5.99200576, 1.06021529, np.nan, 0., np.nan, 0.48421892]])
+        data_array, header_row = np_float_array_from_file(FLOAT_AND_NON, header=1, delimiter=",")
+        self.assertTrue(header_row == good_header)
+        self.assertTrue(np.allclose(data_array, good_data_array, equal_nan=True))
+
+    def testReadNDArrayValueErrorNoHeaderSpecified(self):
+        with capture_stderr(np_float_array_from_file, FLOAT_AND_NON, delimiter=",") as output:
             self.assertTrue("'nan' will be returned" in output)
         good_header = ['pka_203', '(0, 1)', '(0, 1)_max_rls', '(0, -1)_max_rls', '(0, 1)_max_path',
                        '(0, 1)_max_path_flow']
