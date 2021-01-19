@@ -9,6 +9,7 @@ import os
 import shutil
 import tempfile
 import unittest
+from argparse import Namespace
 from common_wrangler.common import (NUM_ATOMS, MAIN_SEC, SEC_ATOMS, SEC_HEAD, SEC_TAIL, ATOM_COORDS, ATOM_TYPE,
                                     COLOR_SEQUENCE, InvalidDataError, NotFoundError, TemplateNotReadableError,
                                     find_files_by_dir, read_csv, get_fname_root, write_csv, str_to_bool,
@@ -19,7 +20,8 @@ from common_wrangler.common import (NUM_ATOMS, MAIN_SEC, SEC_ATOMS, SEC_HEAD, SE
                                     file_rows_to_list, round_to_12th_decimal, single_quote, calc_dist,
                                     np_float_array_from_file, capture_stderr, round_sig_figs, process_cfg, parse_stoich,
                                     natural_keys, str_to_file, read_csv_to_list, read_csv_dict, round_to_fraction,
-                                    make_fig, read_json, process_pdb_file, assign_color, conv_str_to_func, unique_list)
+                                    make_fig, read_json, process_pdb_file, assign_color, conv_str_to_func, unique_list,
+                                    overwrite_config_vals)
 import logging
 
 try:
@@ -443,6 +445,41 @@ class TestIOMethods(unittest.TestCase):
                      'tests/test_data/common/diff_lines_miss_val.csv',
                      'tests/test_data/common/diff_lines_one_nan.csv']
         self.assertTrue(test_rows == good_rows)
+
+
+class TestArgParseFunctions(unittest.TestCase):
+    def testOverwriteConfigVals(self):
+        arg_config_keyword_dict = {'file': 'file',
+                                   'list_fname': 'list_fname',
+                                   'out_dir': 'out_dir',
+                                   'float_val': 'float_val',
+                                   'new_fname': 'new_fname',
+                                   'add_elements': 'add_elements'}
+        default_val_dict = {'list_fname': None,
+                            'file': None,
+                            'out_dir': None,
+                            'float_val': 2.3,
+                            'new_fname': None,
+                            'pdb_print_format': '{:6s}{:>5}{:^6s}{:5s}{:>4}    {:8.3f}{:8.3f}{:8.3f}{:22s}{:>2s}{:s}',
+                            'add_elements': False,
+                            }
+
+        args = Namespace(add_elements=True,
+                         file="do_not_actually_exist.txt",
+                         float_val=9.8,
+                         config=default_val_dict.copy(),
+                         list_fname=None,
+                         new_fname=None,
+                         out_dir=None)
+        args.config['new_fname'] = "hello_world.txt"
+
+        overwrite_config_vals(args, arg_config_keyword_dict, default_val_dict)
+        # check that did not overwrite config value with default arg val
+        self.assertEqual(args.config['new_fname'], "hello_world.txt")
+        # check that did overwrite add_elements flag
+        self.assertTrue(args.config['add_elements'])
+        # check float comparision
+        self.assertAlmostEqual(9.8, args.config['float_val'])
 
 
 class TestRoundingToSigFig(unittest.TestCase):

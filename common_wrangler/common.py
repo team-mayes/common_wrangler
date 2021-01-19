@@ -378,6 +378,28 @@ def make_dir(tgt_dir):
         raise NotFoundError("Resource exists and is not a dir: {}".format(tgt_dir))
 
 
+def overwrite_config_vals(args, arg_config_keyword_dict, default_val_dict):
+    """
+    Method to overwrite args.config[KEY] values with args.key values, as long as the args.key values are different
+    than the default values.
+    :param args: argparse namespace
+    :param arg_config_keyword_dict: dictionary of args.key (keys) with corresponding args.config[KEY] (values)
+    :param default_val_dict: dict with default args.config[KEY] values
+    :return: n/a, updates args.config
+    """
+    arg_dict = vars(args)
+    # any provided value that is not default will overwrite a config value that is default or read from a cfg ini
+    for arg_key, config_key in arg_config_keyword_dict.items():
+        arg_val = arg_dict[arg_key]
+        def_val = default_val_dict[config_key]
+        if isinstance(arg_val, float) or isinstance(def_val, float):
+            if not np.isclose(arg_val, def_val):
+                args.config[config_key] = arg_val
+        else:
+            if arg_val != def_val:
+                args.config[config_key] = arg_val
+
+
 def file_to_str(f_name):
     """
     Reads and returns the contents of the given file.
