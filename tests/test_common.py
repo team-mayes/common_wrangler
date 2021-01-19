@@ -718,7 +718,7 @@ class TestReadCsvDict(unittest.TestCase):
         self.assertEqual(test_dict, atom_float_dict)
 
     def testReadPDBDict(self):
-        test_type = '  HY1 '
+        test_type = ' HY1'
         test_elem = ' H'
         test_dict = read_csv_dict(ELEM_DICT_FILE, pdb_dict=True)
         self.assertTrue(test_type in test_dict)
@@ -727,7 +727,7 @@ class TestReadCsvDict(unittest.TestCase):
 
     def testReadPDBDictWithBlanks(self):
         element_dict_file = os.path.join(SUB_DATA_DIR, "element_dict_w_blanks.csv")
-        test_type = ' HNT1 '
+        test_type = 'HNT1'
         test_elem = ' H'
         test_dict = read_csv_dict(element_dict_file, pdb_dict=True)
         self.assertTrue(test_type in test_dict)

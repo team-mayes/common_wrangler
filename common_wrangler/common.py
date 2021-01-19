@@ -1154,16 +1154,15 @@ def read_csv_dict(d_file, ints=True, one_to_one=True, pdb_dict=False, str_float=
                 if len(row) == 2:
                     if pdb_dict:
                         atom_type = row[0].strip()
-                        type_len = len(atom_type)
-                        element_type = row[1].strip()
-                        if len(element_type) > 2 or type_len > 4:
+                        if len(atom_type) < 4:
+                            atom_type = " " + atom_type
+                        elif len(atom_type) > 4:
                             raise InvalidDataError(f"Error reading line '{row}' in file: {base_fname}\n  "
-                                                   f"Expected to read atom_type,element_type, with atom type no more "
-                                                   f"than 4 characters and element_type no more than 2.")
-                        if type_len == 4:
-                            atom_type = ' {:s} '.format(atom_type)
-                        else:
-                            atom_type = '  {:4s}'.format(atom_type)
+                                                   f"Expected the atom type to have no more than 4 characters.")
+                        element_type = row[1].strip()
+                        if len(element_type) > 2:
+                            raise InvalidDataError(f"Error reading line '{row}' in file: {base_fname}\n  "
+                                                   f"Expected the element_type to have no more than 2 characters.")
                         new_dict[atom_type] = '{:>2s}'.format(element_type)
                     elif ints:
                         new_dict[int(row[0])] = int(row[1])
