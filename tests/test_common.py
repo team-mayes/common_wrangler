@@ -21,7 +21,7 @@ from common_wrangler.common import (NUM_ATOMS, MAIN_SEC, SEC_ATOMS, SEC_HEAD, SE
                                     np_float_array_from_file, capture_stderr, round_sig_figs, process_cfg, parse_stoich,
                                     natural_keys, str_to_file, read_csv_to_list, read_csv_dict, round_to_fraction,
                                     make_fig, read_json, process_pdb_file, assign_color, conv_str_to_func, unique_list,
-                                    overwrite_config_vals)
+                                    overwrite_config_vals, save_json)
 import logging
 
 try:
@@ -143,6 +143,15 @@ CORR_KEY = 'corr'
 COORD_KEY = 'coord'
 FREE_KEY = 'free_energy'
 RAD_KEY_SEQ = [COORD_KEY, FREE_KEY, CORR_KEY]
+
+
+GOOD_PROJECT_DICT = {'EXPECTED_BASIS': 'def2tzvp',
+                     'LOG_DIR': 'tests/test_data/gaussian_output_condensed_phase',
+                     'RXN_STEPS': {'1': {'TYPES': ['ESTER_H_OVERALL'], 'NAMES': ['TPA', 'IPA'],
+                                         'STEPS': ['INI_REACTS', 'STEP1_REACTS', 'STEP1_TS', 'STEP1_PRODS']}},
+                     'SINGLE_TEMP_K': 433.15, 'TEMP_RANGE': '353.15,463.15,10', 'TEMPS_K': [363.15, 423.15],
+                     'VIB_SCALE': 0.9505}
+JSON_FILE = os.path.join(SUB_DATA_DIR, "project_info.json")
 
 
 def expected_dir_data():
@@ -361,17 +370,10 @@ class TestMakeDir(unittest.TestCase):
             silent_remove(NEW_DIR, disable=DISABLE_REMOVE)
 
 
-class TestReadJson(unittest.TestCase):
+class TestJsonReadWrite(unittest.TestCase):
     def testJsonToDict(self):
-        good_project_dict = {'EXPECTED_BASIS': 'def2tzvp',
-                             'LOG_DIR': 'tests/test_data/gaussian_output_condensed_phase',
-                             'RXN_STEPS': {'1': {'TYPES': ['ESTER_H_OVERALL'], 'NAMES': ['TPA', 'IPA'],
-                                                 'STEPS': ['INI_REACTS', 'STEP1_REACTS', 'STEP1_TS', 'STEP1_PRODS']}},
-                             'SINGLE_TEMP_K': 433.15, 'TEMP_RANGE': '353.15,463.15,10', 'TEMPS_K': [363.15, 423.15],
-                             'VIB_SCALE': 0.9505}
-        j_file = os.path.join(SUB_DATA_DIR, "project_info.json")
-        project_dict = read_json(j_file)
-        self.assertEqual(project_dict, good_project_dict)
+        project_dict = read_json(JSON_FILE)
+        self.assertEqual(project_dict, GOOD_PROJECT_DICT)
 
     def testJsonToDictCatchError(self):
         try:
@@ -380,6 +382,11 @@ class TestReadJson(unittest.TestCase):
             self.assertFalse("I should not be reached")
         except InvalidDataError as e:
             self.assertTrue("Error in reading JSON format" in e.args[0])
+
+    def testSaveJson(self):
+        fname = os.path.join(SUB_DATA_DIR, "temp.json")
+        save_json(GOOD_PROJECT_DICT, fname)
+        self.assertFalse(diff_lines(fname, JSON_FILE))
 
 
 class TestReadPDB(unittest.TestCase):

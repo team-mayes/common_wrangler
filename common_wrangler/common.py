@@ -540,6 +540,11 @@ def read_json(fname):
         raise InvalidDataError(f"Error in reading JSON format for file: {fname}")
 
 
+def save_json(data, fname):
+    with open(fname, 'w') as json_file:
+        json.dump(data, json_file, sort_keys=True, indent=4)
+
+
 # TODO: continue adding tests here
 def np_float_array_from_file(data_file, delimiter=" ", header=False, gather_hist=False):
     """

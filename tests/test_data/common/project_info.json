@@ -2,15 +2,27 @@
     "EXPECTED_BASIS": "def2tzvp",
     "LOG_DIR": "tests/test_data/gaussian_output_condensed_phase",
     "RXN_STEPS": {
-        "1":  {
-            "TYPES": ["ESTER_H_OVERALL"],
-            "NAMES": ["TPA", "IPA"],
-            "STEPS": ["INI_REACTS", "STEP1_REACTS", "STEP1_TS", "STEP1_PRODS"]}
+        "1": {
+            "NAMES": [
+                "TPA",
+                "IPA"
+            ],
+            "STEPS": [
+                "INI_REACTS",
+                "STEP1_REACTS",
+                "STEP1_TS",
+                "STEP1_PRODS"
+            ],
+            "TYPES": [
+                "ESTER_H_OVERALL"
+            ]
+        }
     },
     "SINGLE_TEMP_K": 433.15,
-    "TEMP_RANGE": "353.15,463.15,10",
     "TEMPS_K": [
-        363.15, 423.15
+        363.15,
+        423.15
     ],
+    "TEMP_RANGE": "353.15,463.15,10",
     "VIB_SCALE": 0.9505
 }
