@@ -540,9 +540,11 @@ def read_json(fname):
         raise InvalidDataError(f"Error in reading JSON format for file: {fname}")
 
 
-def save_json(data, fname):
+def save_json(data, fname, print_message=True):
     with open(fname, 'w') as json_file:
         json.dump(data, json_file, sort_keys=True, indent=4)
+    if print_message:
+        print(f"Wrote file: {os.path.relpath(fname)}")
 
 
 # TODO: continue adding tests here
