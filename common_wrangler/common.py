@@ -79,6 +79,14 @@ COLOR_SEQUENCE = [COLORBREWER_BLUE, COLORBREWER_GREEN, COLORBREWER_ORANGE, COLOR
 
 COLORBREWER_BROWN = "#ff7f00"
 COLORBREWER_YELLOW = "#ffff33"
+NREL_BLUE = "#0288ce"
+NREL_LT_BLUE = "#03b5ee"
+NREL_GREEN = "#539535"
+NREL_LT_GREEN = "#83c341"
+NREL_YELLOW = "#fecd34"
+NREL_ORANGE = "#f9911e"
+NREL_GRAY = "#495864"
+NREL_LT_GRAY = "#c6ccd2"
 
 
 # Tolerance initially based on double standard machine precision of 5 × 10−16 for float64 (decimal64)
@@ -142,6 +150,7 @@ PDB_Y_LAST_CHAR = 46
 PDB_Z_LAST_CHAR = 54
 PDB_BEFORE_ELE_LAST_CHAR = 76
 PDB_ELE_LAST_CHAR = 78
+
 
 # Error Codes
 # The good status code
