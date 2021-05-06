@@ -77,16 +77,21 @@ COLOR_SEQUENCE = [COLORBREWER_BLUE, COLORBREWER_GREEN, COLORBREWER_ORANGE, COLOR
                   COLORBREWER_LT_BLUE, COLORBREWER_LT_GREEN, COLORBREWER_LT_ORANGE, COLORBREWER_LT_PURPLE,
                   COLORBREWER_PINK, COLORBREWER_LT_GRAY]
 
+
 COLORBREWER_BROWN = "#ff7f00"
 COLORBREWER_YELLOW = "#ffff33"
-NREL_BLUE = "#0288ce"
-NREL_LT_BLUE = "#03b5ee"
-NREL_GREEN = "#539535"
-NREL_LT_GREEN = "#83c341"
-NREL_YELLOW = "#fecd34"
-NREL_ORANGE = "#f9911e"
-NREL_GRAY = "#495864"
-NREL_LT_GRAY = "#c6ccd2"
+# https://www.nrel.gov/comm-standards/web/typography.html https://thesource.nrel.gov/nrel-brand/
+# converted pantone to hex with google
+NREL_BLUE = "#007dcc"
+NREL_LT_BLUE = "#00a6de"
+NREL_GREEN = "#4f8c0d"
+NREL_LT_GREEN = "#7dba00"
+NREL_YELLOW = "#fcc917"
+NREL_ORANGE = "#d48500"
+NREL_GRAY = "#636b70"
+NREL_LT_GRAY = "#c9c9c4"
+
+NON_NUMERIC = csv.QUOTE_NONNUMERIC
 
 
 # Tolerance initially based on double standard machine precision of 5 × 10−16 for float64 (decimal64)
@@ -822,7 +827,7 @@ def check_for_files(file_name, file_list_name, search_pattern=None, search_dir=N
         raise IOError(warning_message)
 
     # Only search directories if there is a pattern to match
-    if search_pattern:
+    if search_pattern is not None:
         # convert to what regex will understand
         if not ("*" in search_pattern):
             mod_search_pattern = "*{}*".format(search_pattern)
