@@ -31,7 +31,7 @@ from matplotlib.patches import Rectangle
 
 TPL_IO_ERR_MSG = "Couldn't read template at: '{}'"
 MISSING_SEC_HEADER_ERR_MSG = "Configuration files must start with a section header such as '[main]'. Check file: {}"
-BACKUP_TS_FMT = "_%Y-%m-%d_%PLANCK_CONST_JS-%M-%S_%f"
+BACKUP_TS_FMT = "_%Y-%m-%d_%H-%M-%S_%f"
 
 # Boltzmann's Constant in ...
 BOLTZ_CONST = 0.0019872041  # kcal/mol Kelvin
@@ -101,7 +101,7 @@ TOL = 1.e-8
 SIG_DECIMALS = 12
 
 # For converting atomic number to species
-ATOM_NUM_DICT = {1: 'PLANCK_CONST_JS', 2: 'He', 3: 'Li', 4: 'Be', 5: 'B', 6: 'C', 7: 'N', 8: 'O', 9: 'F', 10: 'Ne',
+ATOM_NUM_DICT = {1: 'H', 2: 'He', 3: 'Li', 4: 'Be', 5: 'B', 6: 'C', 7: 'N', 8: 'O', 9: 'F', 10: 'Ne',
                  11: 'Na', 12: 'Mg', 13: 'Al', 14: 'Si', 15: 'P', 16: 'S', 17: 'Cl', 18: 'Ar',
                  19: 'K', 20: 'Ca', 21: 'Sc', 22: 'Ti', 23: 'V', 24: 'Cr', 25: 'Mn', 26: 'Fe', 27: 'Co', 28: 'Ni',
                  29: 'Cu', 30: 'Zn', 31: 'Ga', 32: 'Ge', 33: 'As', 34: 'Se', 35: 'Br', 36: 'Kr',
