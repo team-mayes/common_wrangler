@@ -107,6 +107,37 @@ ATOM_NUM_DICT = {1: 'H', 2: 'He', 3: 'Li', 4: 'Be', 5: 'B', 6: 'C', 7: 'N', 8: '
                  29: 'Cu', 30: 'Zn', 31: 'Ga', 32: 'Ge', 33: 'As', 34: 'Se', 35: 'Br', 36: 'Kr',
                  }
 
+COMP = 'Isotopic Composition'
+MASS = 'Standard Atomic Weight'
+CARBON = 'C'
+HYDROGEN = 'H'
+OXYGEN = 'O'
+NITROGEN = 'N'
+SULFUR = 'S'
+FLORINE = 'F'
+CHLORINE = 'Cl'
+BROMINE = 'Br'
+IODINE = 'I'
+SODIUM = 'Na'
+POTASSIUM = 'K'
+SILICON = 'Si'
+# from NIST, 2020
+ISOTOPE_MASS_DICT = {HYDROGEN: {COMP: [0.9998857, 0.0001157], MASS: [1.007825032, 2.014101778]},
+                     CARBON: {COMP: [0.9893800, 0.0107800], MASS: [12.00000000, 13.00335484]},
+                     NITROGEN: {COMP: [0.9963620, 0.0036420], MASS: [14.0030740044320, 15.0001088988864]},
+                     OXYGEN: {COMP: [0.9975716, 0.000381, 0.0020514], MASS: [15.99491462, 16.99913176, 17.99915961]},
+                     FLORINE: {COMP: [1.0], MASS: [18.99840316]},
+                     SODIUM: {COMP: [1.0], MASS: [22.98976928]},
+                     SULFUR: {COMP: [0.949926, 0.00752, 0.042524, 0.00011],
+                              MASS: [31.97207117, 32.97145891, 33.967867, 35.96708071]},
+                     CHLORINE: {COMP: [0.75761, 0.24241], MASS: [34.96885268, 36.9659026]},
+                     POTASSIUM: {COMP: [0.93258144, 0.0001171, 0.06730244],
+                                 MASS: [38.96370649, 39.96399817, 40.96182526]},
+                     BROMINE: {COMP: [0.50697, 0.49317], MASS: [78.91833761, 80.91628971]},
+                     SILICON: {COMP: [0.9222319, 0.046858, 0.0309211], MASS: [27.97692653, 28.97649466, 29.97377014]}
+                     }
+
+
 # Common config variables
 OUT_DIR = 'out_dir'
 
@@ -1778,6 +1809,15 @@ def make_fig(fname, x_array, y1_array, y1_label="", ls1="-", color1=COLORBREWER_
 
 
 # specifically for chemistry
+
+def calc_mass_from_formula(mol_formula):
+    stoich_dict = parse_stoich(mol_formula)
+    mol_mass = 0
+    for atom_type, num_atoms in stoich_dict.items():
+        mass_most_abundant_isotope = ISOTOPE_MASS_DICT[atom_type][MASS][0]
+        mol_mass += mass_most_abundant_isotope * num_atoms
+    return mol_mass
+
 
 def parse_stoich(stoich_string, add_to_dict=None):
     raw_list = re.findall(r'([A-Z][a-z]*)(\d*)', stoich_string)

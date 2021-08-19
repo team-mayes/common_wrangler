@@ -21,7 +21,7 @@ from common_wrangler.common import (NUM_ATOMS, MAIN_SEC, SEC_ATOMS, SEC_HEAD, SE
                                     np_float_array_from_file, capture_stderr, round_sig_figs, process_cfg, parse_stoich,
                                     natural_keys, str_to_file, read_csv_to_list, read_csv_dict, round_to_fraction,
                                     make_fig, read_json, process_pdb_file, assign_color, conv_str_to_func, unique_list,
-                                    overwrite_config_vals, save_json)
+                                    overwrite_config_vals, save_json, calc_mass_from_formula)
 import logging
 
 try:
@@ -1403,6 +1403,12 @@ class TestChemistry(unittest.TestCase):
         new_stoich_dict = parse_stoich(add_stoich, add_to_dict=ini_stoich_dict)
         good_stoich_dict = {'C': 7, 'H': 8}
         self.assertEqual(new_stoich_dict, good_stoich_dict)
+
+    def testMassCalcAgainstPubChem(self):
+        formula = "C9H14O5"
+        mw = calc_mass_from_formula(formula)
+        # below is the exact mass from pubchem
+        self.assertTrue(np.isclose(202.08412354, mw))
 
 
 class TestAssignColor(unittest.TestCase):
