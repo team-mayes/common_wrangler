@@ -9,6 +9,7 @@ import csv
 import difflib
 import errno
 import fnmatch
+import gzip
 import json
 import math
 import re
@@ -584,15 +585,23 @@ def natural_keys(text):
 
 def read_json(fname):
     try:
-        with open(fname) as json_file:
-            return json.load(json_file)
+        if fname.endswith("gz"):
+            with gzip.open(fname, 'rb') as json_file:
+                return json.load(json_file)
+        else:
+            with open(fname) as json_file:
+                return json.load(json_file)
     except json.decoder.JSONDecodeError:
         raise InvalidDataError(f"Error in reading JSON format for file: {fname}")
 
 
 def save_json(data, fname, print_message=True):
-    with open(fname, 'w') as json_file:
-        json.dump(data, json_file, sort_keys=True, indent=4)
+    if fname.endswith("gz"):
+        with gzip.open(fname, 'wb') as json_file:
+            json_file.write(json.dumps(data, sort_keys=True, indent=4).encode('utf-8'))
+    else:
+        with open(fname, 'w') as json_file:
+            json.dump(data, json_file, sort_keys=True, indent=4)
     if print_message:
         print(f"Wrote file: {os.path.relpath(fname)}")
 

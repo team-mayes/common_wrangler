@@ -388,6 +388,16 @@ class TestJsonReadWrite(unittest.TestCase):
         save_json(GOOD_PROJECT_DICT, fname)
         self.assertFalse(diff_lines(fname, JSON_FILE))
 
+    def testJsonToGZFile(self):
+        json_zip_fname = os.path.join(SUB_DATA_DIR, "project_info.json.gz")
+        try:
+            project_dict = read_json(JSON_FILE)
+            save_json(project_dict, json_zip_fname)
+            project_dict_from_gz = read_json(json_zip_fname)
+            self.assertEqual(project_dict_from_gz, GOOD_PROJECT_DICT)
+        finally:
+            silent_remove(json_zip_fname)
+
 
 class TestReadPDB(unittest.TestCase):
     def testReadPDBFname(self):
