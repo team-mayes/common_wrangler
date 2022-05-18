@@ -82,7 +82,7 @@ COLOR_SEQUENCE = [COLORBREWER_BLUE, COLORBREWER_GREEN, COLORBREWER_ORANGE, COLOR
 COLORBREWER_BROWN = "#ff7f00"
 COLORBREWER_YELLOW = "#ffff33"
 # https://www.nrel.gov/comm-standards/web/typography.html https://thesource.nrel.gov/nrel-brand/
-# converted pantone to hex with google
+# converted pantone to hex with Google
 NREL_BLUE = "#007dcc"
 NREL_LT_BLUE = "#00a6de"
 NREL_GREEN = "#4f8c0d"
@@ -432,7 +432,7 @@ def make_dir(tgt_dir):
 def overwrite_config_vals(args, arg_config_keyword_dict, default_val_dict):
     """
     Method to overwrite args.config[KEY] values with args.key values, as long as the args.key values are different
-    than the default values.
+       from the default values.
     :param args: argparse namespace
     :param arg_config_keyword_dict: dictionary of args.key (keys) with corresponding args.config[KEY] (values)
     :param default_val_dict: dict with default args.config[KEY] values
@@ -533,7 +533,7 @@ def round_to_fraction(array, increment):
     FYI: only tested on positive numbers. Check behavior for negative numbers if needed.
     :param array: array_like input data
     :param increment: float, the fraction of 1 that should be used for rounding
-    :return: array, rounded to closest increment
+    :return: array, rounded to the closest increment
     """
     try:
         # only one integer is allowable: 1
@@ -878,7 +878,7 @@ def check_for_files(file_name, file_list_name, search_pattern=None, search_dir=N
             mod_search_pattern = "*{}*".format(search_pattern)
         else:
             mod_search_pattern = search_pattern
-        # change search_dir 'None' to current directory, if: search subdirectory specified, or neither file_name or
+        # change search_dir 'None' to current directory, if: search subdirectory specified, or neither file_name nor
         #     file_list_name is specified (then defaults to check current subdirectory only)
         if search_dir is None and (search_sub_dir or (file_name is None and file_list_name is None)):
             search_dir = os.getcwd()
@@ -1189,7 +1189,7 @@ def list_to_csv(data, out_fname, delimiter=',', mode='w', quote_style=csv.QUOTE_
 
 def read_csv_dict(d_file, ints=True, one_to_one=True, pdb_dict=False, str_float=False):
     """
-    If an dictionary file is given, read it and return the dict[old]=new.
+    If a dictionary file is given, read it and return the dict[old]=new.
     Checks that all keys are unique.
     If one_to_one=True, checks that there 1:1 mapping of keys and values.
 
@@ -1375,32 +1375,32 @@ def fmt_row_data(raw_data, fmt_str):
     return fmt_rows
 
 
-def conv_raw_val(param, def_val, int_list=True):
+def conv_raw_val(entry, def_val, int_list=True):
     """
     Converts the given parameter into the given type (default returns the raw value).  Returns the default value
-    if the param is None.
-    :param param: The value to convert.
+    if the entry is None.
+    :param entry: The value to convert.
     :param def_val: The value that determines the type to target.
-    :param int_list: flag to specify if lists should converted to a list of integers
+    :param int_list: boolean, specify if lists should be converted to a list of integers
     :return: The converted parameter value.
     """
-    if param is None:
+    if entry is None:
         return def_val
     if isinstance(def_val, bool):
-        if param in ['T', 't', 'true', 'TRUE', 'True']:
+        if entry in ['T', 't', 'true', 'TRUE', 'True']:
             return True
         else:
             return False
     if isinstance(def_val, int):
-        return int(param)
+        return int(entry)
     if isinstance(def_val, float):
-        return float(param)
+        return float(entry)
     if isinstance(def_val, list):
         if int_list:
-            return to_int_list(param)
+            return to_int_list(entry)
         else:
-            return to_list(param)
-    return param
+            return to_list(entry)
+    return entry
 
 
 def process_cfg(raw_cfg, def_cfg_vals=None, req_keys=None, int_list=True, store_extra_keys=False):
@@ -1410,7 +1410,7 @@ def process_cfg(raw_cfg, def_cfg_vals=None, req_keys=None, int_list=True, store_
     :param raw_cfg: The configuration map.
     :param def_cfg_vals: dictionary of default values
     :param req_keys: dictionary of required types
-    :param int_list: flag to specify if lists should converted to a list of integers
+    :param int_list: flag to specify if lists should be converted to a list of integers
     :param store_extra_keys: boolean to skip error if there are unexpected keys
     :return: The processed configuration.
 
@@ -1499,7 +1499,7 @@ def diff_lines(floc1, floc2, delimiter=","):
     :return: a list of the lines with differences
     """
     diff_lines_list = []
-    # Save diffs to strings to be converted to use csv parser
+    # Save diffs to strs to be converted to use csv parser
     output_pos_dict = OrderedDict()
     output_neg_dict = OrderedDict()
     with open(floc1, 'r') as file1:
@@ -1740,7 +1740,7 @@ def save_figure(f_name, print_msg=True):
     """
     Specifies where and if to save a created figure
     :param f_name: str, name for the file
-    :param print_msg: boolean as to whether to print a note that a figure was saved
+    :param print_msg: boolean, whether to print a note that a figure was saved
     :return: n/a
     """
     plt.savefig(f_name, bbox_inches='tight', transparent=True)
@@ -1848,3 +1848,29 @@ def parse_stoich(stoich_string, add_to_dict=None):
             else:
                 stoich_dict[key] = add_to_dict[key]
     return stoich_dict
+
+
+def stoich_to_formula(stoich_dict, report_as_loss=False):
+    non_core = sorted(list(set(stoich_dict.keys()) - {"C", "H", "O"}))
+    mol_formula = ""
+    for atom_type in ["C", "H"] + non_core + ["O"]:
+        if atom_type in stoich_dict:
+            atom_num = stoich_dict[atom_type]
+            if atom_num > 0:
+                mol_formula += atom_type
+            if atom_num > 1:
+                mol_formula += f"{atom_num}"
+
+    if mol_formula == "H4O2":
+        mol_formula = "2H2O"
+    elif mol_formula == "H4":
+        mol_formula = "2H2"
+    elif mol_formula == "H4O":
+        if report_as_loss:
+            mol_formula = "H2-H2O"
+        else:
+            mol_formula = "H2+H2O"
+    if report_as_loss:
+        mol_formula = "-" + mol_formula
+
+    return mol_formula

@@ -21,7 +21,7 @@ from common_wrangler.common import (NUM_ATOMS, MAIN_SEC, SEC_ATOMS, SEC_HEAD, SE
                                     np_float_array_from_file, capture_stderr, round_sig_figs, process_cfg, parse_stoich,
                                     natural_keys, str_to_file, read_csv_to_list, read_csv_dict, round_to_fraction,
                                     make_fig, read_json, process_pdb_file, assign_color, conv_str_to_func, unique_list,
-                                    overwrite_config_vals, save_json, calc_mass_from_formula)
+                                    overwrite_config_vals, save_json, calc_mass_from_formula, stoich_to_formula)
 import logging
 
 try:
@@ -291,7 +291,7 @@ class TestCheckFileFileList(unittest.TestCase):
             self.assertTrue("ghost.csv" in e.args[0])
 
     def testSearchCurrentDir(self):
-        # this test assumes only only license file
+        # this test assumes only license file
         found_list = check_for_files(None, None, search_pattern="LICENSE")
         self.assertEqual(len(found_list), 1)
         self.assertEqual(os.path.relpath(found_list[0]), 'LICENSE')
@@ -495,7 +495,7 @@ class TestArgParseFunctions(unittest.TestCase):
         self.assertEqual(args.config['new_fname'], "hello_world.txt")
         # check that did overwrite add_elements flag
         self.assertTrue(args.config['add_elements'])
-        # check float comparision
+        # check float comparison
         self.assertAlmostEqual(9.8, args.config['float_val'])
 
 
@@ -1287,6 +1287,10 @@ class TestConversions(unittest.TestCase):
         int_list = [2, 3, 4]
         self.assertEqual(int_list, conv_raw_val(int_str, []))
 
+    def testNoneToList(self):
+        entry = None
+        self.assertEqual([], conv_raw_val(entry, []))
+
     def testNotIntMissFlag(self):
         non_int_str = 'a,b,c'
         try:
@@ -1419,6 +1423,41 @@ class TestChemistry(unittest.TestCase):
         mw = calc_mass_from_formula(formula)
         # below is the exact mass from pubchem
         self.assertTrue(np.isclose(202.08412354, mw))
+
+    def testStoichToFormulaC6H6O(self):
+        stoich_dict = {'O': 1, 'C': 6, 'H': 6}
+        formula = stoich_to_formula(stoich_dict)
+        self.assertEqual(formula, "C6H6O")
+
+    def testStoichToFormulaH3N(self):
+        stoich_dict = {'N': 1, 'H': 3}
+        formula = stoich_to_formula(stoich_dict)
+        self.assertEqual(formula, "H3N")
+
+    def testStoichToFormulaGlu(self):
+        stoich_dict = {'N': 1, 'O': 4, 'C': 5, 'H': 9}
+        formula = stoich_to_formula(stoich_dict)
+        self.assertEqual(formula, "C5H9NO4")
+
+    def testStoichToFormula2H2O(self):
+        stoich_dict = {'O': 2, 'H': 4}
+        formula = stoich_to_formula(stoich_dict)
+        self.assertEqual(formula, "2H2O")
+
+    def testStoichToFormula2H2(self):
+        stoich_dict = {'H': 4}
+        formula = stoich_to_formula(stoich_dict)
+        self.assertEqual(formula, "2H2")
+
+    def testStoichToFormulaH2H2O(self):
+        stoich_dict = {'O': 1, 'H': 4}
+        formula = stoich_to_formula(stoich_dict)
+        self.assertEqual(formula, "H2+H2O")
+
+    def testStoichToFormulaNegH2H2O(self):
+        stoich_dict = {'O': 1, 'H': 4}
+        formula = stoich_to_formula(stoich_dict, report_as_loss=True)
+        self.assertEqual(formula, "-H2-H2O")
 
 
 class TestAssignColor(unittest.TestCase):
